@@ -32,12 +32,14 @@
             CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
             GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
             PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            UITEST_TARGET_APP_PATH = "$(BUILT_PRODUCTS_DIR)/GitFlow Studio.app";
             SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
         }; name = Debug; };
         B1000000000000000000000E = {isa = XCBuildConfiguration; buildSettings = {
             CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
             GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
             PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            UITEST_TARGET_APP_PATH = "$(BUILT_PRODUCTS_DIR)/GitFlow Studio.app";
             SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
         }; name = Release; };
         B1000000000000000000000F = {isa = XCConfigurationList; buildConfigurations = (B1000000000000000000000D, B1000000000000000000000E); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
@@ -82,7 +84,7 @@
 		};
 		A1000000000000000000000D /* Project object */ = {
 			isa = PBXProject;
-			attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {A10000000000000000000009 = {CreatedOnToolsVersion = 16.0; }; }; };
+			attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {A10000000000000000000009 = {CreatedOnToolsVersion = 16.0; }; B1000000000000000000000C = {CreatedOnToolsVersion = 16.0; TestTargetID = A10000000000000000000009; }; }; };
 			buildConfigurationList = A1000000000000000000000E;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;

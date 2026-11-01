@@ -84,7 +84,7 @@ struct StudioWindow: View {
                         if section == .changes && !model.status.files.isEmpty {
                             Text("\(model.status.files.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         }
-                    } } icon: { Image(systemName: section.icon) }.tag(section)
+                    } } icon: { Image(systemName: section.icon) }.tag(section).accessibilityIdentifier("workspace-\(section.rawValue)")
                 }
             } header: { Text("Workspace") }
             if model.repository != nil {
