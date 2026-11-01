@@ -64,7 +64,7 @@ The benchmarks create and delete their own temporary repositories. See [PERFORMA
 
 ## Distribution
 
-`./scripts/release.sh preview` creates a local ZIP with checksums and readiness evidence. Developer ID signing/notarization commands are documented in [RELEASING.md](Documentation/RELEASING.md); App Store preparation and blockers are in [STORE_READINESS.md](Documentation/STORE_READINESS.md). The current suite has 67 passing integration tests. A universal arm64/x86_64 app cross-build succeeded; Intel execution remains unverified.
+`./scripts/release.sh preview` creates a local ZIP with checksums and readiness evidence. Developer ID signing/notarization commands are documented in [RELEASING.md](Documentation/RELEASING.md); App Store preparation and blockers are in [STORE_READINESS.md](Documentation/STORE_READINESS.md). The current suite has 67 passing integration tests plus two passing native UI tests on hosted Xcode 16.4. A universal arm64/x86_64 app cross-build succeeded; Intel execution remains unverified.
 
 The local `.app` is not notarized. A distributable release needs a Developer ID identity, hardened-runtime signing, notarization, stapling, and clean-machine validation. App Sandbox is intentionally disabled: arbitrary repository access, installed Git, SSH agents, credential helpers, external hooks, and configuration span the sandbox boundary. A future Mac App Store build needs a separate entitlement and helper architecture; adding sandbox flags alone is insufficient.
 

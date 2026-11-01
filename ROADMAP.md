@@ -54,7 +54,7 @@ These entries describe implemented paths. The milestone and automated coverage a
 - [ ] Review all working UI commands against their Git effects and confirmations.
 - [x] Full Xcode 16.4 native project build succeeded on hosted macOS 15.8.2; see GitHub validation runs.
 - [x] Add a native XCUITest target for staging/commit and real merge workflows.
-- [ ] Execute the UI target and verify its results with full Xcode.
+- [x] Execute both native UI tests with hosted Xcode 16.4; staging/commit/history and real merge continuation pass.
 - [ ] Validate macOS 14 and Intel execution; the development host is arm64 macOS 27.
 - [ ] Capture Instruments CPU, allocation, responsiveness, and rendering traces.
 - [ ] Developer ID signing, notarization, clean-machine launch, and release packaging.
@@ -81,6 +81,7 @@ Repository safety takes precedence over covering an unsupported case with a misl
 - [x] Worktree existing-branch creation, move, lock/unlock and reviewed prune; real Git tests.
 - [x] Git subprocess/operation Instruments intervals and bounded capture script.
 - [x] Hosted Instruments Time Profiler service capture retained with environment/hash/TOC; no local xctrace.
-- [ ] UI/child-Git CPU, allocations, startup and scrolling traces.
+- [x] Capture and separately export a 30.48-second native conflict-workspace Allocations trace; recorder code 54 and time-limit SIGKILL are explicitly retained.
+- [ ] Inspect heap retention in Instruments; capture UI/child-Git CPU, startup and scrolling traces.
 - [ ] Developer ID signing/notarization: no Apple Developer team or certificate configured.
 - [ ] App Store sandbox and runtime architecture: separate gate selected by user.

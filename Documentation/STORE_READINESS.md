@@ -34,7 +34,7 @@ Re-audit the exact store binary, any bundled Git/dependencies, final sandbox sto
 ## Release acceptance gates
 
 - [x] Hosted Xcode 16.4 native project build on macOS 15.8.2. Local full Xcode remains absent.
-- [ ] Native XCUITest execution on supported macOS; test source exists but is not yet executed.
+- [x] Two native XCUITest workflows pass on hosted macOS 15.8.2 with Xcode 16.4. Wider UI/platform coverage remains required.
 - [ ] macOS 14 and Intel runtime verification (cross-compilation is not execution).
 - [ ] Instruments traces for CPU/allocations, startup, editor scrolling, history and idle behavior.
 - [ ] Remaining parity and conflict edge cases in `DESKTOP_PARITY.md` and `ROADMAP.md`.

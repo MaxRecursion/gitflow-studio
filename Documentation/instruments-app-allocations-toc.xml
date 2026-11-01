@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<trace-toc>
+    <run number="1">
+        <info>
+            <target>
+                <device uuid="D804C7A2-0578-5C77-A303-F7BC4A79EC3C" model="Virtual Machine" name="sat12-dp153-eb67db69-ac84-4359-bbfe-b2e7c1606fd7-F6F0F1221063" os-version="15.8.2 (24H232)" platform="macOS"/>
+                <process arguments="--repo /var/folders/y3/p6x0rn5562l5qyxy7x6jqrsc0000gn/T//gitflow-demo.KiuLoz" type="launched" return-exit-status="9" name="GitFlowStudio" pid="3687" termination-reason="SIGKILL"/>
+            </target>
+            <summary>
+                <start-date>2026-11-01T11:07:14.141Z</start-date>
+                <end-date>2026-11-01T11:07:44.622Z</end-date>
+                <duration>30.480923</duration>
+                <end-reason>Time limit reached</end-reason>
+                <instruments-version>16.0 (16F6)</instruments-version>
+                <template-name>Allocations</template-name>
+                <recording-mode>Deferred</recording-mode>
+                <time-limit>30 seconds</time-limit>
+                <intruments-recording-settings>
+                    <instrument name="Allocations">
+                        <array>
+                            <dictionary>
+                                <key name="All Allocations">
+                                    <value>Discard unrecorded data upon stop</value>
+                                </key>
+                            </dictionary>
+                            <dictionary>
+                                <key name="Heap Allocations">
+                                    <value>Identify virtual C++ objects</value>
+                                </key>
+                            </dictionary>
+                            <dictionary>
+                                <key name="Recorded Types">
+                                    <value>Record all types</value>
+                                </key>
+                            </dictionary>
+                        </array>
+                    </instrument>
+                </intruments-recording-settings>
+            </summary>
+        </info>
+        <processes>
+            <process name="kernel.release.vmapple" pid="0" path="/System/Library/Kernels/kernel.release.vmapple"/>
+            <process name="GitFlowStudio" pid="3687" path="/Users/runner/work/gitflow-studio/gitflow-studio/build/GitFlow Studio.app/Contents/MacOS/GitFlowStudio"/>
+        </processes>
+        <data>
+            <table schema="global-roi-layout" target-pid="SINGLE"/>
+            <table schema="os-log" category="PointsOfInterest"/>
+            <table exclude-os-logs="0" schema="global-poi-layout" target-pid="SINGLE"/>
+            <table schema="tick" frequency="10"/>
+            <table schema="os-log-arg" category="PointsOfInterest"/>
+            <table schema="kdebug-signpost" target-pid="SINGLE"/>
+            <table schema="os-signpost-arg" category="PointsOfInterest"/>
+            <table schema="dyld-library-load" target-pid="SINGLE"/>
+            <table schema="gcd-perf-event" target-pid="SINGLE"/>
+            <table codes="&quot;0x1f,0x05&quot;" schema="kdebug-strings" target="SINGLE"/>
+            <table codes="&quot;46,2&quot;" schema="kdebug" callstack="user" target="SINGLE"/>
+            <table codes="&quot;0x21,0xa&quot;" schema="kdebug" callstack="user" target="SINGLE"/>
+            <table codes="&quot;0x1,0xa&quot;" schema="kdebug" callstack="user" target="SINGLE"/>
+            <table category="PointsOfInterest" schema="os-signpost" dynamic-tracing-enabled-subsystems="&quot;com.apple.neappprivacy&quot;"/>
+            <table target-pid="SINGLE" schema="roi-metadata" exclude-os-logs="0"/>
+            <table exclude-os-logs="0" schema="region-of-interest" target-pid="SINGLE"/>
+            <table schema="thread-info"/>
+            <table codes="&quot;0x07,0x00&quot; &quot;0x1f,0x05&quot;" schema="kdebug" target="SINGLE"/>
+            <table schema="process-info"/>
+        </data>
+        <tracks>
+            <track name="Allocations">
+                <details>
+                    <detail name="Statistics" kind="table"/>
+                    <detail name="Allocations List" kind="table"/>
+                </details>
+            </track>
+            <track name="VM Tracker">
+                <details>
+                    <detail name="Regions Map" kind="table"/>
+                </details>
+            </track>
+        </tracks>
+    </run>
+</trace-toc>

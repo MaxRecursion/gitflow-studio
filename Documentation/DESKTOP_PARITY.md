@@ -140,3 +140,7 @@ Next parity work should prioritize repository safety regression tests, missing-f
 [pr-ui]: https://github.com/desktop/desktop/tree/c3a5c51ea7bccd98f0d32dd2f6db531296d8215d/app/src/ui/open-pull-request
 [stage]: https://github.com/desktop/desktop/blob/c3a5c51ea7bccd98f0d32dd2f6db531296d8215d/app/src/lib/git/stage.ts
 [changed-range]: https://github.com/desktop/desktop/blob/c3a5c51ea7bccd98f0d32dd2f6db531296d8215d/app/src/ui/diff/changed-range.ts
+
+## Native CI evidence
+
+[Run 41300237355](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41300237355) verifies 67 integration tests and two XCUITest flows on macOS 15.8.2/Xcode 16.4. The GUI tests cover file staging, commit creation, history selection and an incoming-choice merge through explicit staging/continuation, with Git assertions on final bytes, index, parents and clean status. This adds automation to the earlier manual observations without extending claims to every partial/missing row above.

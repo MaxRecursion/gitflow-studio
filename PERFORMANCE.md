@@ -87,3 +87,9 @@ The filesystem-heavy result includes creating and removing the disposable fixtur
 ## Final preview idle sample
 
 The final local universal app was sampled after 30 seconds of warmup with a clean one-file/four-commit fixture and Changes visible. [The new record](Documentation/idle-release-preview.json) has 31 samples over 30.01 seconds: median RSS **146.50 MiB**, peak **146.55 MiB**, and no CPU-time increase measurable at `ps` precision. Executable SHA-256: `12534acb803f8b032b23ae0fe2430dad92e262037d8c0c833535472e9c58213e`. The earlier 137.52 MiB observation refers to an older binary and fixture. Neither record establishes typical physical footprint or a large-repository memory guarantee.
+
+## Native conflict workspace Allocations capture
+
+[Export/validation run 41300675288](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41300675288) successfully reads the native app's saved Allocations trace. [Its table of contents](Documentation/instruments-app-allocations-toc.xml) records GitFlowStudio on hosted macOS 15.8.2, a generated conflict fixture, and 30.480923 seconds from 11:07:14.141Z to 11:07:44.622Z. The end reason is Time limit reached; the launched target was stopped with SIGKILL by the recording session.
+
+The [original recording run](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41300364232) saved the trace but returned code 54. That nonzero recorder result is preserved, not treated as a clean application exit. A separate successful export validates the artifact. The trace is retained locally at `build/profiles/native-allocations/App.trace` and in the final QA evidence. Open it in Instruments to inspect heap categories, retained allocations and stacks. Its exported table of contents does not provide heap totals, and no numeric allocation/leak conclusion is claimed. This is a bounded startup/idle conflict-workspace capture; editor interaction, long-session growth, scrolling and large repositories remain unprofiled.
