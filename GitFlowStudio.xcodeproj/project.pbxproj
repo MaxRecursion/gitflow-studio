@@ -31,14 +31,14 @@
         B1000000000000000000000D = {isa = XCBuildConfiguration; buildSettings = {
             CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
             GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
-            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudioApp;
             UITEST_TARGET_APP_PATH = "$(BUILT_PRODUCTS_DIR)/GitFlow Studio.app";
             SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
         }; name = Debug; };
         B1000000000000000000000E = {isa = XCBuildConfiguration; buildSettings = {
             CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
             GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
-            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudioApp;
             UITEST_TARGET_APP_PATH = "$(BUILT_PRODUCTS_DIR)/GitFlow Studio.app";
             SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
         }; name = Release; };
@@ -76,7 +76,7 @@
 			buildRules = ();
 			dependencies = ();
 			fileSystemSynchronizedGroups = (A10000000000000000000005 /* GitFlowStudio */);
-			name = GitFlowStudio;
+			name = GitFlowStudioApp;
 			packageProductDependencies = (A10000000000000000000002 /* GitCore */);
 			productName = "GitFlow Studio";
 			productReference = A10000000000000000000003 /* GitFlow Studio.app */;
