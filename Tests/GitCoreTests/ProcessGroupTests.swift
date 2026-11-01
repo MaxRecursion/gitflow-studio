@@ -3,6 +3,19 @@ import Testing
 @testable import GitCore
 
 struct ProcessGroupTests {
+    @Test func queuedProcessAdmissionCancelsWithoutWaitingForAnActiveCommand() async throws {
+        let gate = GitProcessAdmission(limit: 1)
+        try await gate.acquire()
+        let queued = Task { try await gate.acquire() }
+        try await Task.sleep(for: .milliseconds(20))
+        queued.cancel()
+        await #expect(throws: CancellationError.self) { try await queued.value }
+        let next = Task { try await gate.acquire() }
+        await gate.release()
+        try await next.value
+        await gate.release()
+    }
+
     @Test func deadlinesRemainLiveDuringConcurrentPipeDrainage() async throws {
         let fixture = try await CoreFixture.make()
         defer { fixture.remove() }

@@ -22,22 +22,33 @@ public struct GitProcessRunner: Sendable {
         try Task.checkCancellation()
         let interval = GitPerformance.signposter.beginInterval("Git Subprocess", id: GitPerformance.signposter.makeSignpostID())
         defer { GitPerformance.signposter.endInterval("Git Subprocess", interval) }
+        // Each admitted command owns a blocking waiter plus three pipe workers.
+        // Bound that budget below Dispatch's thread soft limit; queued callers
+        // suspend without occupying a worker and remain promptly cancellable.
+        try await GitProcessAdmission.shared.acquire()
         let state = ProcessState()
-        return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                DispatchQueue.global(qos: .userInitiated).async {
-                    do {
-                        let output = try execute(arguments, directory: directory, input: input,
-                                                 timeout: timeout, limit: maxOutputBytes, state: state, onOutput: onOutput)
-                        if !allowedExitCodes.contains(output.exitCode) {
-                            let message = Self.redacted(String(decoding: output.stderr, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines))
-                            throw GitError.command(output.exitCode, message)
-                        }
-                        continuation.resume(returning: output)
-                    } catch { continuation.resume(throwing: error) }
+        do {
+            let result: GitOutput = try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            let output = try execute(arguments, directory: directory, input: input,
+                                                     timeout: timeout, limit: maxOutputBytes, state: state, onOutput: onOutput)
+                            if !allowedExitCodes.contains(output.exitCode) {
+                                let message = Self.redacted(String(decoding: output.stderr, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines))
+                                throw GitError.command(output.exitCode, message)
+                            }
+                            continuation.resume(returning: output)
+                        } catch { continuation.resume(throwing: error) }
+                    }
                 }
-            }
-        } onCancel: { state.stop(.cancelled) }
+            } onCancel: { state.stop(.cancelled) }
+            await GitProcessAdmission.shared.release()
+            return result
+        } catch {
+            await GitProcessAdmission.shared.release()
+            throw error
+        }
     }
 
     private func execute(_ arguments: [String], directory: URL?, input: Data?, timeout: TimeInterval,
@@ -122,6 +133,36 @@ public struct GitProcessRunner: Sendable {
 
     public static func redacted(_ value: String) -> String {
         value.replacingOccurrences(of: #"(https?://)[^/@\s]+@"#, with: "$1<redacted>@", options: .regularExpression)
+    }
+}
+
+/// Internal so the suspension/cancellation contract can be tested independently.
+actor GitProcessAdmission {
+    static let shared = GitProcessAdmission()
+    private let limit: Int
+    private var active = 0
+    private struct Waiter { let id: UUID; let continuation: CheckedContinuation<Void, Error> }
+    private var waiters: [Waiter] = []
+    init(limit: Int = 8) { precondition(limit > 0); self.limit = limit }
+    func acquire() async throws {
+        try Task.checkCancellation()
+        if active < limit { active += 1; return }
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                if Task.isCancelled { continuation.resume(throwing: CancellationError()) }
+                else { waiters.append(Waiter(id: id, continuation: continuation)) }
+            }
+        } onCancel: { Task { await self.cancel(id) } }
+    }
+    private func cancel(_ id: UUID) {
+        guard let index = waiters.firstIndex(where: { $0.id == id }) else { return }
+        waiters.remove(at: index).continuation.resume(throwing: CancellationError())
+    }
+    func release() {
+        precondition(active > 0)
+        if waiters.isEmpty { active -= 1 }
+        else { waiters.removeFirst().continuation.resume() }
     }
 }
 
