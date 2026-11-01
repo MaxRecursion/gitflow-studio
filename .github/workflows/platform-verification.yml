@@ -19,6 +19,8 @@ jobs:
       DEVELOPER_DIR: ${{ matrix.developer }}
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Select matching Xcode for system developer-tool shims
+        run: sudo xcode-select --switch "$DEVELOPER_DIR"
       - name: Record actual platform
         run: |
           mkdir -p build/platform
