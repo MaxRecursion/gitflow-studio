@@ -73,7 +73,7 @@ final class RepositoryUITests: XCTestCase {
         let continueMerge = app.buttons["conflict-continue"]
         XCTAssertTrue(continueMerge.waitForExistence(timeout: 10))
         continueMerge.click()
-        let confirmContinue = app.buttons["Continue Merge"]
+        let confirmContinue = app.sheets.buttons["Continue Merge"]
         XCTAssertTrue(confirmContinue.waitForExistence(timeout: 5))
         confirmContinue.click()
         for _ in 0..<150 {
