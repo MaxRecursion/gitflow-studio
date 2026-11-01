@@ -162,10 +162,10 @@ final class RepositoryUITests: XCTestCase {
         try setUpFixture(); defer { cleanUpFixture() }
         let options = XCTMeasureOptions(); options.iterationCount = 3
         options.invocationOptions = [.manuallyStart]
-        // Some macOS/Xcode combinations export no launch-specific metric. Keep
-        // an explicit wall-clock interval as evidence, excluding termination.
+        // The launch-specific metric returns no data (and can assert during
+        // harvest) on hosted macOS. Use a wall-clock interval, excluding termination.
         // It includes XCTest's launch/idle synchronization, not just app startup.
-        measure(metrics: [XCTClockMetric(), XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
+        measure(metrics: [XCTClockMetric()], options: options) {
             app.terminate()
             startMeasuring()
             app.launch()

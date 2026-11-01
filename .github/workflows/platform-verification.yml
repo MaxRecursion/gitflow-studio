@@ -9,8 +9,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
-            developer: /Applications/Xcode_16.2.app/Contents/Developer
+          # The macOS 14 image retires November 2, 2026. Keep its captured
+          # core-test evidence; minimum-OS GUI acceptance needs another host.
           - os: macos-15-intel
             developer: /Applications/Xcode_16.4.app/Contents/Developer
     runs-on: ${{ matrix.os }}
