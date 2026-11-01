@@ -109,20 +109,6 @@ struct GraphLane: View {
     let row: CommitGraph.Row
     private let colors: [Color] = [.blue, .purple, .teal, .orange, .pink, .green]
     var body: some View {
-        Canvas { context, size in
-            let mid = size.height / 2
-            func x(_ lane: Int) -> CGFloat { CGFloat(lane) * 14 + 8 }
-            for lane in row.before {
-                var path = Path(); path.move(to: CGPoint(x: x(lane), y: 0)); path.addLine(to: CGPoint(x: x(lane), y: mid))
-                context.stroke(path, with: .color(colors[lane % colors.count].opacity(0.6)), lineWidth: 1.7)
-            }
-            for edge in row.edges {
-                var path = Path(); path.move(to: CGPoint(x: x(edge.from), y: mid)); path.addCurve(to: CGPoint(x: x(edge.to), y: size.height), control1: CGPoint(x: x(edge.from), y: size.height * 0.8), control2: CGPoint(x: x(edge.to), y: size.height * 0.8))
-                context.stroke(path, with: .color(colors[edge.from % colors.count].opacity(0.6)), lineWidth: 1.7)
-            }
-            let circle = Path(ellipseIn: CGRect(x: x(row.lane) - 4, y: mid - 4, width: 8, height: 8))
-            context.fill(circle, with: .color(colors[row.lane % colors.count]))
-            if row.merge { context.stroke(circle, with: .color(.primary), lineWidth: 1) }
-        }
+        NativeCommitGraph(row: row, colors: colors, nodeOutline: row.merge ? .primary : nil)
     }
 }
