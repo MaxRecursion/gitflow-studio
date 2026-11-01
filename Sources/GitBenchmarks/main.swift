@@ -47,7 +47,10 @@ struct GitBenchmarks {
         defer { try? FileManager.default.removeItem(at: directory) }
         let runner = GitProcessRunner()
         _ = try await runner.run(["init", "-b", "main", "--quiet"], in: directory)
-        for (key, value) in [("user.name", "GitFlow Benchmark"), ("user.email", "benchmark@example.invalid"), ("commit.gpgSign", "false"), ("core.hooksPath", "/dev/null")] {
+        // Keep fixture construction deterministic: detached maintenance can
+        // overlap later samples/teardown and is not the operation being measured.
+        // These settings affect only this disposable repository, never app Git.
+        for (key, value) in [("user.name", "GitFlow Benchmark"), ("user.email", "benchmark@example.invalid"), ("commit.gpgSign", "false"), ("core.hooksPath", "/dev/null"), ("maintenance.auto", "false"), ("gc.auto", "0")] {
             _ = try await runner.run(["config", key, value], in: directory)
         }
         for index in 0..<fileCount {
@@ -59,6 +62,7 @@ struct GitBenchmarks {
             try Data("Revision \(index)\n".utf8).write(to: directory.appendingPathComponent("file-0.txt"))
             _ = try await runner.run(["commit", "-qam", "Revision \(index)"], in: directory)
         }
+        _ = try await runner.run(["fsck", "--no-dangling"], in: directory)
         try Data("Uncommitted edit\n".utf8).write(to: directory.appendingPathComponent("file-1.txt"))
         let repository = try await GitRepository.open(directory)
         let openTime = try await measure("open_repository") { _ = try await GitRepository.open(directory) }
