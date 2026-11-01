@@ -82,7 +82,9 @@ struct WorktreeWorkspace: View {
 private struct CreateWorktreeSheet: View {
     @Bindable var model: StudioModel
     @Environment(\.dismiss) private var dismiss
-    @ViewState private var useExisting = false
+    @ViewState private var source = "new"
+    @ViewState private var remoteBranch = ""
+    @ViewState private var remoteBranches: [GitBranch] = []
     @ViewState private var name = ""
     @ViewState private var existingBranch = ""
     @ViewState private var branches: [GitBranch] = []
@@ -92,16 +94,23 @@ private struct CreateWorktreeSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("New Worktree").font(.title2.bold())
-            Picker("Branch", selection: $useExisting) {
-                Text("Create New Branch").tag(false)
-                Text("Use Existing Branch").tag(true)
+            Picker("Branch", selection: $source) {
+                Text("New branch").tag("new")
+                Text("Existing local").tag("existing")
+                Text("Remote branch").tag("remote")
             }.pickerStyle(.segmented)
-            if useExisting {
+            if source == "existing" {
                 Picker("Existing local branch", selection: $existingBranch) {
                     Text("Choose a branch").tag("")
                     ForEach(branches) { branch in Text(branch.name).tag(branch.name) }
                 }
                 Text(branchError ?? (branches.isEmpty ? "No unused local branches are available. Create a new branch instead." : "Branches already checked out in a worktree are unavailable.")).font(.caption).foregroundStyle(.secondary)
+            } else if source == "remote" {
+                Picker("Remote branch", selection: $remoteBranch) {
+                    Text("Choose a branch").tag("")
+                    ForEach(remoteBranches) { branch in Text(branch.name).tag(branch.name) }
+                }
+                TextField("New local branch name", text: $name).textFieldStyle(.roundedBorder)
             } else {
                 TextField("New branch name", text: $name).textFieldStyle(.roundedBorder)
                 TextField("Start from branch or commit", text: $revision).textFieldStyle(.roundedBorder)
@@ -115,20 +124,24 @@ private struct CreateWorktreeSheet: View {
                 Spacer(); Button("Cancel", role: .cancel) { dismiss() }
                 Button("Create Worktree") {
                     guard let repo = model.repository, let destination else { return }
-                    let existing = useExisting, branch = existing ? existingBranch : name, startPoint = revision
+                    let existing = source == "existing", branch = existing ? existingBranch : name, startPoint = revision
+                    let tracking = source == "remote" ? remoteBranches.first { $0.name == remoteBranch } : nil
                     dismiss()
                     model.execute("Creating worktree…") {
-                        if existing { try await repo.addExistingBranchWorktree(at: destination, branch: branch) }
+                        if let tracking { try await repo.addRemoteBranchWorktree(at: destination, localBranch: branch, remoteBranch: tracking) }
+                        else if existing { try await repo.addExistingBranchWorktree(at: destination, branch: branch) }
                         else { try await repo.addWorktree(at: destination, branch: branch, from: startPoint) }
                     }
-                }.buttonStyle(.borderedProminent).disabled(destination == nil || (useExisting ? existingBranch.isEmpty : name.isEmpty || revision.isEmpty)).keyboardShortcut(.defaultAction)
+                }.buttonStyle(.borderedProminent).disabled(destination == nil || (source == "existing" ? existingBranch.isEmpty : name.isEmpty) || (source == "remote" && remoteBranch.isEmpty) || (source == "new" && revision.isEmpty)).keyboardShortcut(.defaultAction)
             }
         }.padding(24).frame(width: 520)
             .task {
                 guard let repo = model.repository else { return }
                 do {
                     let checkedOut = Set(try await repo.worktrees().compactMap(\.branch))
-                    branches = try await repo.branches().filter { !$0.isRemote && !checkedOut.contains("refs/heads/" + $0.name) }
+                    let all = try await repo.branches()
+                    branches = all.filter { !$0.isRemote && !checkedOut.contains("refs/heads/" + $0.name) }
+                    remoteBranches = all.filter { $0.isRemote && !$0.name.hasSuffix("/HEAD") }
                 } catch { branchError = error.localizedDescription }
             }
     }

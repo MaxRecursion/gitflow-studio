@@ -24,6 +24,9 @@ struct HistoryWorkspace: View {
                             }
                         }.tag(commit.sha).contextMenu {
                             Button("Copy Commit SHA") { copy(commit.sha) }
+                            Button("Check Out Commit…") { checkout(commit) }
+                            Button("Reset Here, Keep Staged…") { reset(commit, mode: .soft) }
+                            Button("Reset Here, Unstage All…") { reset(commit, mode: .mixed) }
                             Button("Compare with HEAD") { model.compare(commit.sha, to: "HEAD") }
                             Button("Cherry-pick…") { confirm(.cherryPick, commit) }.disabled(commit.parents.count > 1)
                             Button("Revert…") { confirm(.revert, commit) }.disabled(commit.parents.count > 1)
@@ -41,6 +44,9 @@ struct HistoryWorkspace: View {
                             Spacer()
                             Button(commit.shortSHA) { copy(commit.sha) }.font(.system(.caption, design: .monospaced)).help("Copy full SHA")
                             Menu("Actions") {
+                                Button("Check Out Commit…") { checkout(commit) }
+                                Button("Reset Here, Keep Staged…") { reset(commit, mode: .soft) }
+                                Button("Reset Here, Unstage All…") { reset(commit, mode: .mixed) }
                                 Button("Cherry-pick…") { confirm(.cherryPick, commit) }.disabled(commit.parents.count > 1)
                                 Button("Revert…") { confirm(.revert, commit) }.disabled(commit.parents.count > 1)
                             }
@@ -55,6 +61,19 @@ struct HistoryWorkspace: View {
                 } else { ContentUnavailableView("Every change has a story", systemImage: "clock.arrow.circlepath", description: Text("Select a commit to inspect its details and changes.")) }
             }.frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
         }.onChange(of: model.selectedCommit) { _, _ in model.loadCommit() }
+    }
+    private func checkout(_ commit: GitCommit) {
+        guard let repo = model.repository, let head = model.status.head else { return }
+        model.confirm("Check Out Commit", "Open \(commit.shortSHA) in detached HEAD mode? Commit or stash pending work first. Create a branch before making new commits.") {
+            model.execute("Checking out commit…") { try await repo.checkoutDetached(commit.sha, expectedHead: head) }
+        }
+    }
+    private func reset(_ commit: GitCommit, mode: GitResetMode) {
+        guard let repo = model.repository, let head = model.status.head else { return }
+        let effect = mode == .soft ? "The index will remain staged." : "All staged changes will become unstaged."
+        model.confirm("Reset History", "Move HEAD to \(commit.shortSHA)? \(effect) Working files are preserved. Known published commits and non-ancestor targets are refused. This rewrites local history.", destructive: true) {
+            model.execute("Resetting local history…") { try await repo.resetHistory(to: commit.sha, mode: mode, expectedHead: head) }
+        }
     }
     private func copy(_ sha: String) { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(sha, forType: .string) }
     private func confirm(_ operation: GitOperation, _ commit: GitCommit) {

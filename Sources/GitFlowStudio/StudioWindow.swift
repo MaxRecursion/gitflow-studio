@@ -187,6 +187,7 @@ struct StudioWindow: View {
                     Button("Undo Latest Commit…", action: model.undoCommit)
                     Button("Reveal in Finder", action: model.reveal)
                     Button("Open in Editor", action: model.externalEditor)
+                    Button("Open in Terminal", action: model.openTerminal)
                     Button("Clone Repository…") { model.showClone = true }
                     Button("Initialize Repository…", action: model.initialize)
                 } label: { Label("Repository Actions", systemImage: "ellipsis.circle") }

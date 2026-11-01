@@ -137,6 +137,7 @@ struct RepositoryToolsWorkspace: View {
                     Image(systemName: "tag").foregroundStyle(.tint)
                     VStack(alignment: .leading, spacing: 5) { Text(tag.name).font(.headline); Text(tag.subject).font(.caption).foregroundStyle(.secondary) }
                     Spacer()
+                    Button("Push…") { form = RepositoryForm(kind: .pushTag, target: tag.name, initial: "origin", expectedSHA: tag.sha) }
                     Button("Inspect") { model.preview("Tag · \(tag.name)", arguments: ["show", "--no-ext-diff", "--no-textconv", "refs/tags/" + tag.name, "--"]) }
                     Button { model.confirm("Delete Tag", "Delete the local tag \(tag.name)? Any published remote tag remains.", destructive: true) { model.perform("Deleting tag…", ["tag", "-d", "--", tag.name]) } } label: { Image(systemName: "trash") }.help("Delete local tag")
                 }.padding(.vertical, 10)
@@ -146,11 +147,12 @@ struct RepositoryToolsWorkspace: View {
 }
 
 struct RepositoryForm: Identifiable {
-    enum Kind { case branch, track, renameBranch, remote, remoteURL, stash, tag }
+    enum Kind { case branch, track, renameBranch, remote, remoteURL, stash, tag, pushTag }
     let id = UUID()
     let kind: Kind
     var target = ""
     var initial = ""
+    var expectedSHA = ""
     var title: String {
         switch kind {
         case .branch: "Create Branch"
@@ -159,6 +161,7 @@ struct RepositoryForm: Identifiable {
         case .remote: "Add Remote"
         case .remoteURL: "Change Remote URL"
         case .stash: "Stash Changes"
+        case .pushTag: "Push Tag"
         case .tag: "Create Tag"
         }
     }
@@ -175,10 +178,11 @@ struct RepositoryFormSheet: View {
         VStack(alignment: .leading, spacing: 18) {
             Text(form.title).font(.title2.bold())
             if !form.target.isEmpty { Text(form.target).foregroundStyle(.secondary) }
-            TextField(form.kind == .stash ? "Stash message" : form.kind == .remoteURL ? "Remote URL" : "Name", text: $name).textFieldStyle(.roundedBorder)
+            TextField(form.kind == .stash ? "Stash message" : form.kind == .remoteURL ? "Remote URL" : form.kind == .pushTag ? "Remote name" : "Name", text: $name).textFieldStyle(.roundedBorder)
             if form.kind == .branch || form.kind == .tag { TextField("Starting revision (HEAD)", text: $second).textFieldStyle(.roundedBorder) }
             if form.kind == .remote { TextField("HTTPS, SSH, or local URL", text: $second).textFieldStyle(.roundedBorder) }
             if form.kind == .tag { TextField("Tag message", text: $message).textFieldStyle(.roundedBorder) }
+            if form.kind == .pushTag { Text("Push only this tag. An existing remote tag will not be replaced.").font(.callout).foregroundStyle(.secondary) }
             if form.kind == .stash { Text("Tracked and untracked changes will be saved and removed from the working tree. Ignored files are retained.").font(.callout).foregroundStyle(.secondary) }
             HStack { Spacer(); Button("Cancel", role: .cancel) { dismiss() }; Button(form.title) { submit() }.buttonStyle(.borderedProminent).disabled(name.isEmpty || form.kind == .remote && second.isEmpty).keyboardShortcut(.defaultAction) }
         }.padding(24).frame(width: 480).onAppear { name = form.initial }
@@ -195,6 +199,7 @@ struct RepositoryFormSheet: View {
             case .remote: try await repo.addRemote(name: name, url: second)
             case .remoteURL: try await repo.updateRemote(name: form.target, url: name)
             case .stash: _ = try await repo.perform(["stash", "push", "--include-untracked", "-m", name])
+            case .pushTag: try await repo.pushTag(GitTag(name: form.target, sha: form.expectedSHA, subject: ""), remote: name)
             case .tag: try await repo.createTag(name, revision: second.isEmpty ? "HEAD" : second, message: message)
             }
         }

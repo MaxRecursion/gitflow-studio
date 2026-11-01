@@ -1,0 +1,65 @@
+name: Native interaction profiling
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Prepare Release UI tests
+        run: xcodebuild build-for-testing -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -configuration Release -derivedDataPath build/ProfileDerivedData -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO > build-for-testing.log 2>&1
+      - name: Record measured native conflict interactions
+        run: |
+          mkdir -p build/interaction-profile
+          gate=/private/tmp/GitFlowStudioProfileGate
+          mkdir "$gate"
+          touch "$gate/requested"
+          trap 'rm -rf "$gate"' EXIT
+          sw_vers > build/interaction-profile/environment.txt
+          xcodebuild -version >> build/interaction-profile/environment.txt
+          sysctl hw.model hw.memsize hw.logicalcpu >> build/interaction-profile/environment.txt
+          xcodebuild test-without-building -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -configuration Release -derivedDataPath build/ProfileDerivedData -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -only-testing:GitFlowStudioUITests/RepositoryUITests/testConflictEditorInteractionPerformance -resultBundlePath build/interaction-profile/Interactions.xcresult > build/interaction-profile/ui-test.log 2>&1 &
+          test_pid=$!
+          app_pid=''
+          for attempt in $(seq 1 120); do
+            app_pid="$(pgrep -x GitFlowStudio | head -1 || true)"
+            [[ -n "$app_pid" ]] && break
+            kill -0 "$test_pid" || { tail -40 build/interaction-profile/ui-test.log; exit 1; }
+            sleep 0.5
+          done
+          [[ -n "$app_pid" ]]
+          xcrun xctrace record --template 'Time Profiler' --attach "$app_pid" --time-limit 30s --output build/interaction-profile/Interactions.trace > build/interaction-profile/recording.log 2>&1 &
+          trace_pid=$!
+          for attempt in $(seq 1 240); do
+            if rg -q 'Ctrl-C to stop the recording' build/interaction-profile/recording.log; then touch "$gate/ready"; break; fi
+            kill -0 "$trace_pid" || { cat build/interaction-profile/recording.log; exit 1; }
+            sleep 0.5
+          done
+          [[ -f "$gate/ready" ]]
+          set +e
+          wait "$test_pid"; test_status=$?
+          wait "$trace_pid"; trace_status=$?
+          set -e
+          printf 'UI test exit: %s\nProfiler exit: %s\n' "$test_status" "$trace_status" > build/interaction-profile/status.txt
+          xcrun xctrace export --input build/interaction-profile/Interactions.trace --toc --output build/interaction-profile/table-of-contents.xml
+          xcrun xctrace export --input build/interaction-profile/Interactions.trace --xpath '/trace-toc/run[@number="1"]/data/table[@schema="time-profile"]' --output build/interaction-profile/time-profile.xml
+          python3 scripts/summarize-time-profile.py build/interaction-profile/time-profile.xml > build/interaction-profile/summary.json
+          [[ "$test_status" == 0 && "$trace_status" == 0 ]]
+      - name: Export test measurements
+        if: always()
+        run: |
+          if [[ -d build/interaction-profile/Interactions.xcresult ]]; then
+            xcrun xcresulttool get test-results metrics --path build/interaction-profile/Interactions.xcresult > build/interaction-profile/metrics.json
+            xcrun xcresulttool export attachments --path build/interaction-profile/Interactions.xcresult --output-path build/interaction-profile/UIAttachments
+          fi
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: native-interaction-profile
+          path: |
+            build/interaction-profile
+            build-for-testing.log
+          if-no-files-found: error

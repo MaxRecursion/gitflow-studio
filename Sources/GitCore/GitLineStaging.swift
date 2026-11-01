@@ -24,7 +24,7 @@ extension GitRepository {
 extension GitPatch {
     func selectedLines(_ selection: [Int: Set<Int>], reversed: Bool) throws -> String {
         guard canApplyLines else {
-            throw GitError.invalidInput("Individual-line selection requires an ordinary text edit with a final newline. Use whole-file staging for metadata, binary, renamed, new, deleted, or no-final-newline files.")
+            throw GitError.invalidInput("Individual-line selection requires an ordinary text edit. Use whole-file staging for metadata, binary, renamed, new or deleted files.")
         }
         guard selection.values.contains(where: { !$0.isEmpty }) else { throw GitError.invalidInput("Select at least one added or removed line.") }
         guard Set(selection.keys).isSubset(of: Set(hunks.map(\.id))) else { throw GitError.invalidInput("The selected hunk is no longer available.") }
@@ -40,22 +40,34 @@ extension GitPatch {
             }
             guard !selected.isEmpty else { continue }
             var body = "", sourceCount = 0, targetCount = 0
+            let missingNewline = Set(parsed.lines.filter { $0.kind == .noNewline }.map { $0.id - 1 })
+            var sourceEnded = false, targetEnded = false
+            func emit(_ kind: GitDiffLine.Kind, _ line: GitDiffLine) throws {
+                let consumesSource = kind != .addition, consumesTarget = kind != .deletion
+                guard !(consumesSource && sourceEnded), !(consumesTarget && targetEnded) else {
+                    throw GitError.invalidInput("This selection would append text after an unselected line without a newline. Select both sides of that replacement, or stage the whole file.")
+                }
+                body += kind.rawValue + line.rawContent
+                if consumesSource { sourceCount += 1 }
+                if consumesTarget { targetCount += 1 }
+                if missingNewline.contains(line.id) {
+                    body += "\\ No newline at end of file\n"
+                    if consumesSource { sourceEnded = true }
+                    if consumesTarget { targetEnded = true }
+                }
+            }
             for line in parsed.lines {
                 let kind: GitDiffLine.Kind
                 if reversed && line.kind == .addition { kind = .deletion }
                 else if reversed && line.kind == .deletion { kind = .addition }
                 else { kind = line.kind }
                 switch kind {
-                case .context:
-                    body += " " + line.rawContent; sourceCount += 1; targetCount += 1
+                case .context: try emit(.context, line)
                 case .addition:
-                    if selected.contains(line.id) { body += "+" + line.rawContent; targetCount += 1 }
+                    if selected.contains(line.id) { try emit(.addition, line) }
                 case .deletion:
-                    sourceCount += 1
-                    if selected.contains(line.id) { body += "-" + line.rawContent }
-                    else { body += " " + line.rawContent; targetCount += 1 }
-                case .noNewline:
-                    throw GitError.invalidInput("Use whole-file staging for a file without a final newline.")
+                    try emit(selected.contains(line.id) ? .deletion : .context, line)
+                case .noNewline: break // Belongs to its preceding content row, never independently selectable.
                 }
             }
             let sourceStart = reversed ? parsed.newStart : parsed.oldStart

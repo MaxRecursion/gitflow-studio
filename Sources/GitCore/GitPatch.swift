@@ -24,7 +24,7 @@ public struct GitPatch: Sendable {
     public let header: String
     public let hunks: [GitDiffHunk]
     public let canApplyHunks: Bool
-    /// Line selection currently requires an ordinary regular-file text patch with final newlines.
+    /// Line selection requires an ordinary regular-file text patch; EOF markers are preserved.
     public var canApplyLines: Bool {
         guard canApplyHunks, !header.contains("old mode "), !header.contains("new mode "),
               header.components(separatedBy: "\n").filter({ $0.hasPrefix("diff --git ") }).count == 1,
@@ -33,7 +33,7 @@ public struct GitPatch: Sendable {
               }) else { return false }
         return hunks.allSatisfy { hunk in
             guard let parsed = try? hunk.parsedLines() else { return false }
-            return !parsed.lines.contains { $0.kind == .noNewline }
+            return !parsed.lines.isEmpty
         }
     }
     public init(diff: String) {
@@ -85,7 +85,7 @@ extension GitDiffHunk {
             // content may share a Swift Character with '+' or '-'.
             guard let first = row.utf8.first, let kind = GitDiffLine.Kind(rawValue: String(UnicodeScalar(first))) else { throw unsupported }
             if kind == .noNewline {
-                guard row == "\\ No newline at end of file", id > 0 else { throw unsupported }
+                guard row == "\\ No newline at end of file", id > 0, lines.last?.kind != .noNewline else { throw unsupported }
             }
             let oldNumber = kind == .addition || kind == .noNewline ? nil : oldLine
             let newNumber = kind == .deletion || kind == .noNewline ? nil : newLine

@@ -37,6 +37,7 @@ jobs:
         if: always()
         run: |
           if [[ -d build/UITests.xcresult ]]; then
+            xcrun xcresulttool get test-results metrics --path build/UITests.xcresult > build/UIMetrics.json
             xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/UIAttachments
           fi
       - name: Archive local preview
@@ -49,6 +50,7 @@ jobs:
             build/releases/ci-preview
             build/UITests.xcresult
             build/UIAttachments
+            build/UIMetrics.json
           if-no-files-found: warn
 
   inspect-ui-failure:

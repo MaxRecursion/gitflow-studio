@@ -107,6 +107,7 @@ public struct GitStash: Identifiable, Hashable, Sendable {
 }
 
 public struct GitTag: Identifiable, Hashable, Sendable {
+    public init(name: String, sha: String, subject: String) { self.name = name; self.sha = sha; self.subject = subject }
     public var id: String { name }
     public let name: String
     public let sha: String

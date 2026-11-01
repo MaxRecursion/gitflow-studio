@@ -144,8 +144,8 @@ struct LineStagingTests {
         #expect(try await contents(fixture) == "head\nold\ntail\n")
     }
 
-    @Test func unsupportedPatchTypesAndMissingFinalNewlineAreRefused() async throws {
-        for (base, changed) in [("base", "change"), ("\0base\n", "\0change\n")] {
+    @Test func unsupportedBinaryPatchTypesAreRefused() async throws {
+        for (base, changed) in [("\0base\n", "\0change\n")] {
             let fixture = try await fixture(base: base)
             defer { fixture.remove() }
             try fixture.write("file.txt", changed)
@@ -195,4 +195,36 @@ struct LineStagingTests {
     private func contents(_ fixture: CoreFixture) async throws -> String {
         try await fixture.repository.run(["show", ":file.txt"]).text
     }
+    @Test func missingFinalNewlineReplacementStagesAndUnstagesExactBytes() async throws {
+        for (base, changed) in [("old", "new"), ("old", "new\n"), ("old\n", "new"), ("開始\r\n末尾", "開始\r\n変更🙂")] {
+            let fixture = try await fixture(base: base)
+            defer { fixture.remove() }
+            try fixture.write("file.txt", changed)
+            let diff = try await fixture.repository.diff(path: "file.txt")
+            let patch = GitPatch(diff: diff)
+            #expect(patch.canApplyLines)
+            try await fixture.repository.applyLines(path: "file.txt", staged: false, selection: select(patch) { $0.isSelectable }, expectedDiff: diff)
+            #expect(try await contents(fixture) == changed)
+            let staged = try await fixture.repository.diff(path: "file.txt", staged: true)
+            try await fixture.repository.applyLines(path: "file.txt", staged: true, selection: select(GitPatch(diff: staged)) { $0.isSelectable }, expectedDiff: staged)
+            #expect(try await contents(fixture) == base)
+            #expect(try String(contentsOf: fixture.url.appendingPathComponent("file.txt"), encoding: .utf8) == changed)
+        }
+    }
+
+    @Test func selectionPreservesUnselectedEOFAndRefusesImpossibleAppend() async throws {
+        let fixture = try await fixture(base: "start\nold\nend")
+        defer { fixture.remove() }
+        try fixture.write("file.txt", "start\nnew\nend")
+        let diff = try await fixture.repository.diff(path: "file.txt")
+        try await fixture.repository.applyLines(path: "file.txt", staged: false, selection: select(GitPatch(diff: diff)) { $0.isSelectable }, expectedDiff: diff)
+        #expect(try await contents(fixture) == "start\nnew\nend")
+        try fixture.write("file.txt", "start\nnew\nreplacement")
+        let endDiff = try await fixture.repository.diff(path: "file.txt")
+        await #expect(throws: GitError.self) {
+            try await fixture.repository.applyLines(path: "file.txt", staged: false, selection: select(GitPatch(diff: endDiff)) { $0.kind == .addition }, expectedDiff: endDiff)
+        }
+        #expect(try await contents(fixture) == "start\nnew\nend")
+    }
+
 }

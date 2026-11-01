@@ -4,7 +4,7 @@
   "subtitle": "Native Git and visual merges",
   "bundle_id": "studio.gitflow.mac",
   "bundle_id_status": "provisional-unregistered",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "primary_category": "DEVELOPER_TOOLS",
   "minimum_macos": "14.0",
   "keywords": "git,merge,conflict,commit,branch,repository,diff,version control,developer",
@@ -19,5 +19,5 @@
   "pricing_and_availability": null,
   "age_rating_questionnaire": null,
   "export_compliance_answers": null,
-  "review_notes": "DRAFT: Do not submit the current unsandboxed build to the Mac App Store. Sandbox, Git runtime availability and authentication compatibility remain release gates. No demo account is required for local workflows. Test steps will use an included disposable fixture."
+  "review_notes": "Not a store candidate. The user chose mandatory installed Git and direct distribution on November 1, 2026. App Sandbox/runtime compatibility and Apple account setup remain separate gates."
 }

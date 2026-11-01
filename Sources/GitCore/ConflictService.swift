@@ -55,7 +55,8 @@ public struct ConflictSnapshot: Sendable {
     public let isSymbolicLink: Bool
     public let document: MergeDocument?
     public var isText: Bool { document != nil }
-    public var supportsVersionSelection: Bool { !file.stages.contains { $0.mode == "160000" } }
+    public var isSubmodule: Bool { !file.stages.isEmpty && file.stages.allSatisfy { $0.mode == "160000" } }
+    public var supportsVersionSelection: Bool { isSubmodule || !file.stages.contains { $0.mode == "160000" } }
 }
 
 public enum ConflictResolution: Sendable {
@@ -94,7 +95,7 @@ public struct ConflictService: Sendable {
         let overview = try await overview()
         guard let file = overview.files.first(where: { $0.path == path }) else { throw ConflictError.stale }
         let target = try Self.safeURL(path: path, root: repository.url)
-        let worktree = try Self.readWorktree(target)
+        let worktree = try Self.readWorktree(target, allowDirectory: file.stages.allSatisfy { $0.mode == "160000" })
         var blobs: [Int: Data] = [:]
         for stage in file.stages where stage.mode != "160000" {
             let output = try await repository.runner.run(["cat-file", "blob", stage.objectID], in: repository.url, maxOutputBytes: 8 * 1024 * 1024)
@@ -114,15 +115,43 @@ public struct ConflictService: Sendable {
         return ConflictSnapshot(file: file, operation: overview.operation, current: blobs[2], base: blobs[1], incoming: blobs[3], worktree: worktree.data, worktreeMode: worktree.mode, isSymbolicLink: worktree.symlink, document: document)
     }
 
+    public func submoduleCommitDetails(snapshot: ConflictSnapshot, stage: Int) async throws -> String {
+        guard snapshot.isSubmodule, let version = snapshot.file.stage(stage) else { throw ConflictError.unsupported }
+        let fresh = try await load(path: snapshot.file.path)
+        guard fresh.file == snapshot.file, !fresh.isSymbolicLink else { throw ConflictError.stale }
+        let target = try Self.safeURL(path: snapshot.file.path, root: repository.url)
+        let child = try await GitRepository.open(target)
+        guard child.url == target.resolvingSymlinksInPath().standardizedFileURL else { throw GitError.invalidInput("The submodule checkout is not initialized. You can stage a reference without downloading or changing its files.") }
+        return try await child.run(["show", "--no-show-signature", "--no-ext-diff", "--no-textconv", "--format=fuller", "--stat", version.objectID, "--"]).strictText(context: "Submodule commit details")
+    }
+
     public func resolve(snapshot: ConflictSnapshot, resolution: ConflictResolution) async throws {
         try await repository.transaction { runner, root in
             guard try await Self.operation(runner: runner, url: root) == snapshot.operation else { throw ConflictError.stale }
             let index = try await runner.run(["ls-files", "-u", "-z", "--", snapshot.file.path], in: root)
             guard try Self.parseStages(index.stdout).first == snapshot.file else { throw ConflictError.stale }
             let target = try Self.safeURL(path: snapshot.file.path, root: root)
-            let current = try Self.readWorktree(target)
+            let current = try Self.readWorktree(target, allowDirectory: snapshot.isSubmodule)
             guard current.data == snapshot.worktree, current.mode == snapshot.worktreeMode, current.symlink == snapshot.isSymbolicLink else { throw ConflictError.stale }
             guard snapshot.supportsVersionSelection else { throw ConflictError.unsupported }
+            if snapshot.isSubmodule {
+                let selected: ConflictStage?
+                switch resolution {
+                case .current: selected = snapshot.file.stage(2)
+                case .incoming: selected = snapshot.file.stage(3)
+                case .delete: selected = nil
+                case .text: throw ConflictError.unsupported
+                }
+                // Change only the parent index reference. Never check out or
+                // delete the child repository: it can contain uncommitted work.
+                if let selected {
+                    _ = try await runner.run(["update-index", "--add", "--cacheinfo", "160000", selected.objectID, snapshot.file.path], in: root)
+                } else {
+                    _ = try await runner.run(["update-index", "--force-remove", "--", snapshot.file.path], in: root)
+                }
+                guard try await runner.run(["ls-files", "-u", "-z", "--", snapshot.file.path], in: root).stdout.isEmpty else { throw ConflictError.unresolved }
+                return
+            }
             let data: Data?, mode: String?
             switch resolution {
             case .text(let text):
@@ -230,13 +259,14 @@ public struct ConflictService: Sendable {
     }
 
     private struct Worktree { let data: Data?; let mode: Int?; let symlink: Bool }
-    private static func readWorktree(_ url: URL) throws -> Worktree {
+    private static func readWorktree(_ url: URL, allowDirectory: Bool = false) throws -> Worktree {
         let attributes: [FileAttributeKey: Any]
         do { attributes = try FileManager.default.attributesOfItem(atPath: url.path) }
         catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError { return Worktree(data: nil, mode: nil, symlink: false) }
         let isLink = attributes[.type] as? FileAttributeType == .typeSymbolicLink
         let mode = attributes[.posixPermissions] as? Int
         if isLink { return Worktree(data: Data(try FileManager.default.destinationOfSymbolicLink(atPath: url.path).utf8), mode: mode, symlink: true) }
+        if allowDirectory, attributes[.type] as? FileAttributeType == .typeDirectory { return Worktree(data: nil, mode: mode, symlink: false) }
         guard attributes[.type] as? FileAttributeType == .typeRegular else { throw ConflictError.unsupported }
         guard (attributes[.size] as? Int ?? 0) <= 8 * 1024 * 1024 else { throw ConflictError.tooLarge }
         return Worktree(data: try Data(contentsOf: url), mode: mode, symlink: false)

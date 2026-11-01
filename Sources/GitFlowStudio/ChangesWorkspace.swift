@@ -38,6 +38,7 @@ struct ChangesWorkspace: View {
                         .contextMenu {
                             if !file.isConflicted {
                                 Button("Stage File") { model.stage(file, staged: true) }
+                                if file.isUntracked { Button("Ignore This File") { model.ignore(file) } }
                                 Button("Unstage File") { model.stage(file, staged: false) }.disabled(!file.isStaged)
                                 if !file.isUntracked {
                                     Button("Discard Unstaged Changes…", role: .destructive) {
@@ -121,7 +122,7 @@ struct ChangesWorkspace: View {
                 Button("Select Lines…") {
                     lineSelection = LineSelectionRequest(path: file.path, staged: model.stagedDiff, diff: model.diffText)
                 }.disabled(model.busy != nil || !patch.canApplyLines)
-                    .help(patch.canApplyLines ? "Choose additions and deletions individually" : "Individual-line staging is available for ordinary text patches with final newlines")
+                    .help(patch.canApplyLines ? "Choose additions and deletions individually" : "Individual-line staging is available for ordinary text edits")
                 Button(model.stagedDiff ? "Unstage Hunk" : "Stage Hunk") { applyHunk(patch) }.disabled(model.busy != nil)
             }.padding(10)
         }

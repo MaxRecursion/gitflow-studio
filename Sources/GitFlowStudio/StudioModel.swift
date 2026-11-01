@@ -365,6 +365,15 @@ final class StudioModel {
 
     func cancel() { operationTask?.cancel() }
     func reveal() { if let repository { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repository.url.path) } }
+    func openTerminal() {
+        guard let repository else { return }
+        guard let terminal = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") else { error = "Terminal is not available."; return }
+        NSWorkspace.shared.open([repository.url], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
+    }
+    func ignore(_ file: GitFileChange) {
+        guard let repo = repository, file.isUntracked else { return }
+        execute("Adding ignore rule…") { try await repo.ignoreUntrackedPath(file.path) }
+    }
     func externalEditor() {
         guard let repository else { return }
         let id = UserDefaults.standard.string(forKey: "editorBundleID") ?? "com.microsoft.VSCode"

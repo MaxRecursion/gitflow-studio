@@ -190,6 +190,8 @@ struct ConflictWorkspace: View {
     let onRefresh: () -> Void
     @ViewState<ConflictViewModel> private var model: ConflictViewModel
     @ViewState<Confirmation?> private var confirmation: Confirmation?
+    @ViewState<SubmodulePreview?> private var submodulePreview: SubmodulePreview?
+    private struct SubmodulePreview: Identifiable { let id = UUID(); let text: String }
     private enum Confirmation: Identifiable {
         case proceed, abort, selection(String), delete, version(ConflictResolution), stageText(String), workingFile, savedDraft(ConflictDraftDescriptor), discardCurrent
         var id: String { switch self { case .proceed: "continue"; case .abort: "abort"; case .selection: "selection"; case .delete: "delete"; case .version: "version"; case .stageText: "stageText"; case .workingFile: "workingFile"; case .savedDraft: "savedDraft"; case .discardCurrent: "discardCurrent" } }
@@ -223,6 +225,12 @@ struct ConflictWorkspace: View {
             }
         }
         .background(.background)
+        .sheet(item: $submodulePreview) { preview in
+            VStack(spacing: 0) {
+                HStack { Text("Submodule Commit").font(.headline); Spacer(); Button("Done") { submodulePreview = nil } }.padding(16)
+                Divider(); DiffTextView(text: preview.text)
+            }.frame(minWidth: 600, minHeight: 440)
+        }
         .task { await model.refresh() }
         .onChange(of: model.selectedRegion) { _, _ in model.updateWordComparison() }
         .disabled(model.busy)
@@ -239,9 +247,9 @@ struct ConflictWorkspace: View {
             case .selection(let path):
                 Button("Discard Unsaved Resolution", role: .destructive) { Task { if await model.discardDraft() { await model.select(path) } } }
             case .delete:
-                Button("Delete File and Mark Resolved", role: .destructive) { save(.delete) }
+                Button(model.snapshot?.isSubmodule == true ? "Remove Reference and Keep Checkout" : "Delete File and Mark Resolved", role: .destructive) { save(.delete) }
             case .version(let resolution):
-                Button("Use This Version and Mark Resolved") { save(resolution) }
+                Button(model.snapshot?.isSubmodule == true ? "Stage Commit Reference" : "Use This Version and Mark Resolved") { save(resolution) }
             case .stageText(let text):
                 Button("Write Result and Stage File") { save(.text(text)) }.accessibilityIdentifier("conflict-write-stage")
             case .workingFile:
@@ -418,8 +426,14 @@ struct ConflictWorkspace: View {
     private func specializedWorkspace(_ snapshot: ConflictSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             Label(snapshot.file.category, systemImage: "doc.badge.gearshape").font(.title2)
-            Text("This conflict needs a whole-file decision. The chosen bytes and file mode will be written exactly and staged in Git.").foregroundStyle(.secondary)
-            if snapshot.supportsVersionSelection {
+            Text(snapshot.isSubmodule ? "Choose the commit reference to stage in the parent repository. The submodule checkout and all local edits are kept. Review any remaining submodule working changes before continuing." : "This conflict needs a whole-file decision. The chosen bytes and file mode will be written exactly and staged in Git.").foregroundStyle(.secondary)
+            if snapshot.isSubmodule {
+                HStack(spacing: 16) {
+                    submoduleCard(snapshot.operation.currentLabel, stage: snapshot.file.stage(2), resolution: .current)
+                    submoduleCard(snapshot.operation.incomingLabel, stage: snapshot.file.stage(3), resolution: .incoming)
+                }
+                Text("This action updates the Git index only; it does not download commits or update the child checkout.").font(.caption).foregroundStyle(.secondary)
+            } else if snapshot.supportsVersionSelection {
                 HStack(spacing: 16) {
                     versionCard(title: snapshot.operation.currentLabel, data: snapshot.current, stage: snapshot.file.stage(2), resolution: .current)
                     versionCard(title: snapshot.operation.incomingLabel, data: snapshot.incoming, stage: snapshot.file.stage(3), resolution: .incoming)
@@ -431,6 +445,27 @@ struct ConflictWorkspace: View {
             Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([repository.url.appendingPathComponent(snapshot.file.path)]) }
             Spacer()
         }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private func submoduleCard(_ title: String, stage: ConflictStage?, resolution: ConflictResolution) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline)
+            if let stage {
+                Text(stage.objectID).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
+                Button("Inspect Commit…") {
+                    guard let snapshot = model.snapshot else { return }
+                    model.busy = true
+                    Task { @MainActor in
+                        defer { model.busy = false }
+                        do { submodulePreview = SubmodulePreview(text: try await model.service.submoduleCommitDetails(snapshot: snapshot, stage: stage.number)) }
+                        catch { model.error = error.localizedDescription }
+                    }
+                }
+                Button("Stage This Commit…") { confirmation = .version(resolution) }
+            } else {
+                Text("Reference removed in this version").font(.caption)
+                Button("Remove Reference…") { confirmation = .delete }
+            }
+        }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
     }
     private func versionCard(title: String, data: Data?, stage: ConflictStage?, resolution: ConflictResolution) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -457,8 +492,8 @@ struct ConflictWorkspace: View {
         case .proceed: "Continue \(model.overview.operation.title)?"
         case .abort: "Abort \(model.overview.operation.title)?"
         case .selection: "Discard unsaved resolution edits?"
-        case .delete: "Delete this conflicted file?"
-        case .version: "Stage this whole-file resolution?"
+        case .delete: model.snapshot?.isSubmodule == true ? "Remove this submodule reference?" : "Delete this conflicted file?"
+        case .version: model.snapshot?.isSubmodule == true ? "Stage this submodule commit reference?" : "Stage this whole-file resolution?"
         case .stageText: "Write and stage the merged result?"
         case .workingFile: "Use the existing working file as the result?"
         case .savedDraft: "Discard the saved local draft?"
@@ -471,8 +506,8 @@ struct ConflictWorkspace: View {
         case .proceed: "Git will continue the operation and may create commits. Review staged changes first."
         case .abort: "Git will attempt to restore the state before the operation. Conflict-resolution edits may be lost."
         case .selection: "Your in-memory edits have not been written to the repository."
-        case .delete: "The file will be removed from the working tree and the deletion staged."
-        case .version: "This replaces the worktree file with the selected Git index version and stages it."
+        case .delete: model.snapshot?.isSubmodule == true ? "Remove the parent index reference. The child checkout and all local files are kept on disk." : "The file will be removed from the working tree and the deletion staged."
+        case .version: model.snapshot?.isSubmodule == true ? "Stage the selected commit in the parent index. The child checkout and all local edits are preserved. Review any remaining submodule working changes before continuing." : "This replaces the worktree file with the selected Git index version and stages it."
         case .stageText: "The displayed result will replace the working file and be staged. Review any edits made before opening this resolver using Preview Working File. This does not continue the operation."
         case .workingFile: "This replaces the draft with the existing working file, preserving any prior manual edits. Review and remove any remaining conflict markers before explicitly marking the file resolved."
         case .savedDraft: "The local recovery copy will be removed. This does not change repository files or the Git index."

@@ -202,12 +202,25 @@ extension GitRepository {
             let head = try await runner.run(["rev-parse", "--verify", "HEAD"], in: url).text.trimmingCharacters(in: .newlines)
             guard head == expectedHead else { throw GitError.staleState }
             guard try await ConflictService.operation(runner: runner, url: url) == .none else { throw GitError.invalidInput("Finish the operation in progress before undoing a commit.") }
+            guard try await runner.run(["ls-files", "-u", "-z"], in: url).stdout.isEmpty else { throw GitError.invalidInput("Resolve the unmerged index before undoing a commit.") }
             let remoteRefs = try await runner.run(["for-each-ref", "--contains", head, "--format=%(refname)", "refs/remotes"], in: url)
             guard remoteRefs.stdout.isEmpty else { throw GitError.invalidInput("This commit is present in a remote-tracking branch. Use Revert to preserve shared history.") }
             let parent = try await runner.run(["rev-parse", "--verify", "HEAD^"], in: url, allowedExitCodes: [0, 128])
-            guard parent.exitCode == 0 else { throw GitError.invalidInput("Undoing the first commit is not supported yet. Amend it to revise the initial commit.") }
             let message = try await runner.run(["log", "-1", "--format=%B"], in: url).text.trimmingCharacters(in: .newlines)
-            _ = try await runner.run(["reset", "--soft", parent.text.trimmingCharacters(in: .newlines), "--"], in: url)
+            if parent.exitCode == 0 {
+                _ = try await runner.run(["reset", "--soft", parent.text.trimmingCharacters(in: .newlines), "--"], in: url)
+            } else {
+                let object = try await runner.run(["cat-file", "commit", head], in: url)
+                let headers = object.stdout.split(separator: 10, omittingEmptySubsequences: false).prefix { !$0.isEmpty }
+                guard !headers.contains(where: { $0.starts(with: Data("parent ".utf8)) }) else { throw GitError.invalidInput("The parent commit is unavailable. Fetch more history before undoing this commit.") }
+                let symbolic = try await runner.run(["symbolic-ref", "--quiet", "HEAD"], in: url, allowedExitCodes: [0, 1])
+                guard symbolic.exitCode == 0 else { throw GitError.invalidInput("Create a branch before undoing a detached root commit.") }
+                let ref = try symbolic.strictText(context: "Current branch").trimmingCharacters(in: .newlines)
+                guard ref.hasPrefix("refs/heads/") else { throw GitError.invalidInput("HEAD does not name a local branch.") }
+                // Git's compare-and-swap deletion makes the branch unborn, while
+                // retaining every staged and working byte, including extra edits.
+                _ = try await runner.run(["update-ref", "-d", ref, expectedHead], in: url)
+            }
             return message
         }
     }

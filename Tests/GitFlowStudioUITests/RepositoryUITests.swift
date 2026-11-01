@@ -86,6 +86,82 @@ final class RepositoryUITests: XCTestCase {
         XCTAssertEqual(try git(["status", "--porcelain"]), "")
     }
 
+    func testRebaseConflictRolesAndContinue() async throws { try await resolveReplay(operation: "rebase", expected: "current\n") }
+    func testCherryPickConflictContinue() async throws { try await resolveReplay(operation: "cherry-pick", expected: "incoming\n") }
+    func testRevertConflictContinue() async throws { try await resolveReplay(operation: "revert", expected: "base\n") }
+
+    private func resolveReplay(operation: String, expected: String) async throws {
+        try setUpFixture(); defer { cleanUpFixture() }
+        try git(["switch", "-c", "incoming"]); try write("incoming\n"); try git(["commit", "-am", "Incoming change"])
+        try git(["switch", "main"]); try write("current\n"); try git(["commit", "-am", "Current change"])
+        try git([operation, "incoming"], expectedStatus: 1)
+        app.launch()
+        let incoming = app.buttons["conflict-use-incoming"]
+        XCTAssertTrue(incoming.waitForExistence(timeout: 20))
+        if operation == "rebase" {
+            XCTAssertEqual(incoming.label, "Use Replayed Commit")
+            XCTAssertEqual(app.buttons["conflict-use-current"].label, "Use Destination")
+        }
+        incoming.click(); app.buttons["Mark File Resolved"].click()
+        app.sheets.buttons["conflict-write-stage"].click()
+        let proceed = app.buttons["conflict-continue"]
+        XCTAssertTrue(proceed.waitForExistence(timeout: 10)); proceed.click()
+        let title = "Continue " + operation.capitalized
+        let confirm = app.sheets.buttons[title]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5)); confirm.click()
+        for _ in 0..<150 {
+            let message = try git(["log", "-1", "--format=%s"])
+            if message.contains(operation == "rebase" ? "Current change" : operation == "revert" ? "Revert" : "Incoming change"), try git(["ls-files", "-u"]).isEmpty { break }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTAssertEqual(try String(contentsOf: fixture.appendingPathComponent("changed.txt"), encoding: .utf8), expected)
+        XCTAssertEqual(try git(["ls-files", "-u"]), "")
+        XCTAssertEqual(try git(["status", "--porcelain"]), "")
+        XCTAssertEqual(try git(["rev-list", "--parents", "-n", "1", "HEAD"]).split(separator: " ").count, 2)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.appendingPathComponent(".git/REBASE_HEAD").path))
+        attachScreenshot(operation + "-continued")
+    }
+
+    func testConflictEditorInteractionPerformance() throws {
+        try setUpFixture(); defer { cleanUpFixture() }
+        let base = (0..<100).map { "// Region \($0)\nlet setting\($0) = \"base\"\n" + String(repeating: "// unchanged context\n", count: 8) }.joined()
+        try write(base); try git(["commit", "-am", "Large base"])
+        try git(["switch", "-c", "incoming"]); try write(base.replacingOccurrences(of: "\"base\"", with: "\"incoming\"")); try git(["commit", "-am", "Large incoming"])
+        try git(["switch", "main"]); try write(base.replacingOccurrences(of: "\"base\"", with: "\"current\"")); try git(["commit", "-am", "Large current"])
+        try git(["merge", "incoming"], expectedStatus: 1)
+        app.launch()
+        let current = app.buttons["conflict-use-current"], incoming = app.buttons["conflict-use-incoming"]
+        XCTAssertTrue(current.waitForExistence(timeout: 20))
+        let editor = app.textViews["Editable merged result"]
+        // Only the dedicated profiling workflow creates this gate. Hold the
+        // fixture steady until Instruments has attached; normal tests do not wait.
+        let profileGate = "/private/tmp/GitFlowStudioProfileGate"
+        if FileManager.default.fileExists(atPath: profileGate + "/requested") {
+            let deadline = Date().addingTimeInterval(150)
+            while !FileManager.default.fileExists(atPath: profileGate + "/ready"), Date() < deadline { Thread.sleep(forTimeInterval: 0.1) }
+            XCTAssertTrue(FileManager.default.fileExists(atPath: profileGate + "/ready"))
+        }
+        let options = XCTMeasureOptions(); options.iterationCount = 5
+        measure(metrics: [XCTClockMetric(), XCTCPUMetric(application: app), XCTMemoryMetric(application: app)], options: options) {
+            current.click()
+            editor.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 24, dy: 16)).click()
+            editor.typeText(" ")
+            incoming.click()
+        }
+        attachScreenshot("conflict-editor-performance")
+        app.typeKey("q", modifierFlags: .command)
+        let discard = app.dialogs.buttons["Discard Drafts and Quit"]
+        if discard.waitForExistence(timeout: 5) { discard.click() }
+    }
+
+    func testWarmApplicationLaunchPerformance() throws {
+        try setUpFixture(); defer { cleanUpFixture() }
+        let options = XCTMeasureOptions(); options.iterationCount = 3
+        measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
+            app.launch(); app.terminate()
+        }
+    }
+
     private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

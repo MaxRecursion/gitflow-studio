@@ -46,6 +46,8 @@ struct CommandPalette: View {
             }
             Divider()
             Button("Open Repository…") { dismiss(); model.openPanel() }
+            Button("Open in Terminal") { dismiss(); model.openTerminal() }.disabled(model.repository == nil)
+            Button("Open in External Editor") { dismiss(); model.externalEditor() }.disabled(model.repository == nil)
             Button("Reveal in Finder") { dismiss(); model.reveal() }.disabled(model.repository == nil)
             HStack { Spacer(); Button("Close", role: .cancel) { dismiss() } }
         }.padding(24).frame(width: 420)
