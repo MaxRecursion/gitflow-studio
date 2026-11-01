@@ -57,7 +57,10 @@ public struct GitProcessRunner: Sendable {
         guard limit > 0 else { throw GitError.invalidInput("Output limit must be positive.") }
         let process = Process()
         process.executableURL = executable
-        process.arguments = ["--no-pager", "--literal-pathspecs", "-c", "color.ui=false"] + arguments
+        // Keep Git's automatic maintenance inside this command's lifecycle and
+        // repository mutation gate. A detached repack can otherwise outlive it.
+        process.arguments = ["--no-pager", "--literal-pathspecs", "-c", "color.ui=false",
+                             "-c", "maintenance.autoDetach=false", "-c", "gc.autoDetach=false"] + arguments
         process.currentDirectoryURL = directory
         var environment = ProcessInfo.processInfo.environment
         for name in ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_PREFIX"] {
