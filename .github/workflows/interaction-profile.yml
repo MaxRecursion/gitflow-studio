@@ -31,14 +31,8 @@ jobs:
             sleep 0.5
           done
           [[ -n "$app_pid" ]]
-          xcrun xctrace record --template 'Time Profiler' --attach "$app_pid" --time-limit 30s --output build/interaction-profile/Interactions.trace > build/interaction-profile/recording.log 2>&1 &
+          python3 scripts/record-ui-profile.py "$app_pid" build/interaction-profile/Interactions.trace build/interaction-profile/recording.log "$gate/ready" &
           trace_pid=$!
-          for attempt in $(seq 1 240); do
-            if rg -q 'Ctrl-C to stop the recording' build/interaction-profile/recording.log; then touch "$gate/ready"; break; fi
-            kill -0 "$trace_pid" || { cat build/interaction-profile/recording.log; exit 1; }
-            sleep 0.5
-          done
-          [[ -f "$gate/ready" ]]
           set +e
           wait "$test_pid"; test_status=$?
           wait "$trace_pid"; trace_status=$?

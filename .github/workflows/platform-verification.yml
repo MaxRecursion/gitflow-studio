@@ -1,0 +1,44 @@
+name: Platform verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            developer: /Applications/Xcode_16.2.app/Contents/Developer
+          - os: macos-15-intel
+            developer: /Applications/Xcode_16.4.app/Contents/Developer
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: ${{ matrix.developer }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Record actual platform
+        run: |
+          mkdir -p build/platform
+          sw_vers > build/platform/environment.txt
+          uname -m >> build/platform/environment.txt
+          xcodebuild -version >> build/platform/environment.txt
+          swift --version >> build/platform/environment.txt
+          git --version >> build/platform/environment.txt
+      - name: Real Git integration tests
+        run: ./scripts/test.sh > build/platform/core-tests.log 2>&1
+      - name: Native critical UI workflows
+        run: xcodebuild test -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -skip-testing:GitFlowStudioUITests/RepositoryUITests/testConflictEditorInteractionPerformance -skip-testing:GitFlowStudioUITests/RepositoryUITests/testWarmApplicationLaunchPerformance -resultBundlePath build/platform/Platform.xcresult > build/platform/ui-tests.log 2>&1
+      - name: Export UI attachments
+        if: always()
+        run: |
+          if [[ -d build/platform/Platform.xcresult ]]; then
+            xcrun xcresulttool export attachments --path build/platform/Platform.xcresult --output-path build/platform/UIAttachments
+          fi
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: platform-${{ matrix.os }}
+          path: build/platform
