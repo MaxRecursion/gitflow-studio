@@ -1,6 +1,6 @@
 # Distribution readiness
 
-Assessment: November 1, 2026. **Engineering preview; not App Store ready.** The user selected local Developer ID preparation first and confirmed that no Apple Developer team is currently available.
+Assessment: November 2, 2026. **Direct-distribution engineering preview; not App Store ready.** The user explicitly chose mandatory installed Git and Developer ID direct distribution, and confirmed that no Apple Developer team is currently available. No bundled Git or sandboxed store variant is authorized. Store metadata is retained as a draft; store submission is deferred under this runtime decision.
 
 ## Two independent release paths
 
@@ -14,7 +14,7 @@ Current native SPM packaging produces a locally runnable, ad hoc signed `.app`. 
 
 | Area | Current behavior | Required verification/change |
 | --- | --- | --- |
-| Git availability | Homebrew/local/system Git discovery; system Git may require CLT | Decide how the store build supplies a compliant, maintained Git runtime while honoring the original installed-Git requirement. Test a clean Mac without CLT. |
+| Git availability | Homebrew/local/system Git discovery; system Git may require CLT | The user retained mandatory installed Git. A self-contained store runtime is unresolved; do not bundle Git or claim store compatibility. A different release decision and clean-Mac validation would be required. |
 | Repository access | Open panel, drag/drop, recent absolute paths | Security-scoped bookmark persistence and balanced access lifetimes; handle moved/deleted/revoked grants. |
 | Linked worktrees | Git common directory may be outside selected worktree | Explicit grants for repository metadata and linked directories; no implicit broad home access. |
 | Authentication | Existing credential helpers and SSH configuration | Test Keychain access, SSH agent/sockets/keys/config, HTTPS helpers, failures and user recovery inside the sandbox. |
@@ -34,13 +34,14 @@ Re-audit the exact store binary, any bundled Git/dependencies, final sandbox sto
 ## Release acceptance gates
 
 - [x] Hosted Xcode 16.4 native project build on macOS 15.8.2. Local full Xcode remains absent.
-- [x] Two native XCUITest workflows pass on hosted macOS 15.8.2 with Xcode 16.4. Wider UI/platform coverage remains required.
-- [ ] macOS 14 and Intel runtime verification (cross-compilation is not execution).
-- [ ] Instruments traces for CPU/allocations, startup, editor scrolling, history and idle behavior.
+- [x] Seven native XCUITest tests pass on hosted macOS 15.8.2 with Xcode 16.4, including four operation continuations and editor/launch exercises. Wider UI coverage remains required.
+- [ ] Complete minimum-OS GUI acceptance. macOS 14.8.9 ARM passed 76 core tests; initial UI fixtures encountered mismatched Xcode libraries, then the hosted image entered retirement brownout. Intel macOS 15.7.9 passes 79 core and five native UI tests; see RELEASE_STATUS.md.
+- [x] Retained service CPU, native Allocations and Release editor-interaction CPU traces with explicit fixture/measurement limits.
+- [ ] Frame-time/scrolling, launch-to-first-frame, SwiftUI updates, child-Git CPU and long-session retention profiling.
 - [ ] Remaining parity and conflict edge cases in `DESKTOP_PARITY.md` and `ROADMAP.md`.
 - [x] Two real-hook cancellation/timeout tests verify ordinary descendants in the isolated process group stop before return. Detached/escaped jobs remain a limitation; abrupt cancellation can leave Git locks.
 - [ ] Developer ID certificate, hardened-runtime signature, accepted notarization, verified staple, Gatekeeper and clean-machine installation.
-- [ ] Sandbox/runtime feasibility gates above for a separate store build.
+- [ ] Store sandbox/runtime gates above; deferred under the mandatory installed-Git/direct-distribution decision.
 - [ ] Registered bundle identifier, App Store Connect record, developer identity and support/privacy URLs.
 - [ ] Final icon/screenshots, privacy answers, export compliance, age rating, pricing/territories, review contact and release choice.
 - [ ] App Store validation and review approval.

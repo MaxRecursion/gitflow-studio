@@ -1,0 +1,101 @@
+{
+  "source_revision": "a6d20bc971bd8ae1b2c921b98769f54e8ed78629",
+  "workflow_run": 41304728335,
+  "configuration": "Release",
+  "environment": "ProductName:\t\tmacOS\nProductVersion:\t\t15.8.2\nBuildVersion:\t\t24H232\nXcode 16.4\nBuild version 16F6\nhw.model: VirtualMac2,1\nhw.memsize: 7516192768\nhw.logicalcpu: 3\n",
+  "fixture": "One text file, 100 separated conflict regions, about 1,000 source lines; five current/edit-space/incoming sequences.",
+  "scope": "XCTest clock includes accessibility automation and idle synchronization. CPU/memory metrics describe the app under instrumentation, not frame time or ordinary idle memory. CPU hardware counters returned zero and are unavailable.",
+  "metrics": {
+    "CPU Cycles (mac)": {
+      "unit": "kC",
+      "median": 0,
+      "minimum": 0,
+      "maximum": 0,
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Clock Monotonic Time": {
+      "unit": "s",
+      "median": 1.863122082,
+      "minimum": 1.7937287210000001,
+      "maximum": 1.9911166610000002,
+      "samples": [
+        1.872090422,
+        1.7937287210000001,
+        1.9911166610000002,
+        1.863122082,
+        1.8179083070000002
+      ]
+    },
+    "Memory Peak Physical (mac)": {
+      "unit": "kB",
+      "median": 52562.112,
+      "minimum": 52218.048,
+      "maximum": 52709.568,
+      "samples": [
+        52218.048,
+        52414.656,
+        52562.112,
+        52709.568,
+        52676.8
+      ]
+    },
+    "CPU Time (mac)": {
+      "unit": "s",
+      "median": 0.9787093600000001,
+      "minimum": 0.927717086,
+      "maximum": 1.080990256,
+      "samples": [
+        0.9971935540000001,
+        0.9656606590000001,
+        1.080990256,
+        0.9787093600000001,
+        0.927717086
+      ]
+    },
+    "Absolute Memory Physical (mac)": {
+      "unit": "kB",
+      "median": 52037.824,
+      "minimum": 51824.832,
+      "maximum": 52168.896,
+      "samples": [
+        51824.832,
+        52037.824,
+        52168.896,
+        52103.36,
+        51841.216
+      ]
+    },
+    "Memory Physical (mac)": {
+      "unit": "kB",
+      "median": 212.992,
+      "minimum": -262.144,
+      "maximum": 966.656,
+      "samples": [
+        966.656,
+        212.992,
+        360.448,
+        -65.536,
+        -262.144
+      ]
+    },
+    "CPU Instructions Retired (mac)": {
+      "unit": "kI",
+      "median": 0,
+      "minimum": 0,
+      "maximum": 0,
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}

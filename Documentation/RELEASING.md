@@ -1,6 +1,6 @@
 # Reproducible release preparation
 
-Current state: local engineering preview. No Apple Developer team or code-signing identity is configured. No Apple submission has been made. App Store gates are tracked separately in [STORE_READINESS.md](STORE_READINESS.md).
+Current state: local direct-distribution engineering preview, version 0.2.0 (build 2). Installed Git remains mandatory; a bundled/store runtime is not authorized. No Apple Developer team or code-signing identity is configured. No Apple submission has been made. App Store gates are tracked separately in [STORE_READINESS.md](STORE_READINESS.md).
 
 ## Local preview
 
@@ -53,7 +53,7 @@ xcodebuild -project GitFlowStudio.xcodeproj -scheme GitFlowStudio \
   -resultBundlePath build/UITests.xcresult test
 ```
 
-The UI test target creates isolated temporary repositories for staging/committing and real merge resolution. It never targets a user repository. XCTest screenshots are retained as attachments. Until this command succeeds, the test source and project configuration are preparation, not verified UI automation.
+The UI test target creates isolated temporary repositories for staging/committing, merge/rebase/cherry-pick/revert resolution, repeated launch and a 100-conflict editor exercise. It never targets a user repository. XCTest screenshots are retained as attachments. Seven tests have passed on hosted Xcode 16.4; that evidence does not replace validation of the final signed binary.
 
 ## Instruments
 
@@ -65,4 +65,4 @@ The UI test target creates isolated temporary repositories for staging/committin
 
 The script records `.trace`, its table of contents, host/tool details and the packaged executable's SHA-256 under `build/profiles`. Interact with a disposable repository during each trace. The app emits local intervals named Git Subprocess, Repository Open, Repository Status, History Page and Repository Presentation. No paths, arguments or source text are recorded in those intervals. Review the traces in Instruments; the script does not turn a recording into a performance claim. See [PERFORMANCE.md](../PERFORMANCE.md) for protocols and unmeasured targets.
 
-Hosted evidence is linked from [RELEASE_STATUS.md](RELEASE_STATUS.md). `macos.yml` runs core/Xcode/universal/UI validation; `instruments.yml` captures and exports service CPU samples; `app-profile.yml` captures the native conflict workspace and supports exporting a saved trace independently. The initial Allocations recorder returned 54 after its time limit and forced target stop, although the trace exported successfully. Preserve that exit/termination qualification rather than interpreting a readable trace as a clean app shutdown.
+Hosted evidence is linked from [RELEASE_STATUS.md](RELEASE_STATUS.md). `macos.yml` runs core/Xcode/universal/UI validation; `instruments.yml` captures and exports service CPU samples; `app-profile.yml` captures the native conflict workspace and supports exporting a saved trace independently. `interaction-profile.yml` attaches Time Profiler to a Release app before measured native edits, retaining CPU/memory/clock metrics. `platform-verification.yml` executes Intel coverage; macOS 14 core evidence is retained, but that runner is retiring and minimum-OS GUI acceptance needs another host. The initial Allocations recorder returned 54 after its time limit and forced target stop, although the trace exported successfully. Preserve that exit/termination qualification rather than interpreting a readable trace as a clean app shutdown.

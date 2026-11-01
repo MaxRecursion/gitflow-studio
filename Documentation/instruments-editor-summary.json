@@ -1,0 +1,61 @@
+{
+  "scope": "Sampled running-thread weights for the listed trace processes. Sampling is not exact CPU-time accounting; child processes are included only when present in the captured data.",
+  "processes": [
+    "GitFlowStudio (11002)"
+  ],
+  "samples": 7211,
+  "total_sampled_weight_ms": 7211.0,
+  "main_thread_weight_ms": 6230.0,
+  "other_threads_weight_ms": 981.0,
+  "unsymbolicated_leaf_weight_ms": 48.0,
+  "top_leaf_frames": [
+    {
+      "name": "objc_msgSend",
+      "sampled_weight_ms": 558.0
+    },
+    {
+      "name": "mach_msg2_trap",
+      "sampled_weight_ms": 170.0
+    },
+    {
+      "name": "<deduplicated_symbol>",
+      "sampled_weight_ms": 152.0
+    },
+    {
+      "name": "CF_IS_OBJC",
+      "sampled_weight_ms": 95.0
+    },
+    {
+      "name": "__CFStringEqual",
+      "sampled_weight_ms": 93.0
+    },
+    {
+      "name": "objc_release",
+      "sampled_weight_ms": 91.0
+    },
+    {
+      "name": "_nanov2_free",
+      "sampled_weight_ms": 82.0
+    },
+    {
+      "name": "__kdebug_trace64",
+      "sampled_weight_ms": 64.0
+    },
+    {
+      "name": "__CFStringAppendFormatCore",
+      "sampled_weight_ms": 63.0
+    },
+    {
+      "name": "nanov2_calloc_type",
+      "sampled_weight_ms": 51.0
+    },
+    {
+      "name": "___chkstk_darwin",
+      "sampled_weight_ms": 50.0
+    },
+    {
+      "name": "_CFRelease",
+      "sampled_weight_ms": 50.0
+    }
+  ]
+}

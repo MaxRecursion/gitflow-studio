@@ -1,0 +1,153 @@
+[
+  {
+    "testIdentifier" : "RepositoryUITests/testConflictEditorInteractionPerformance()",
+    "testIdentifierURL" : "test://com.apple.xcode/GitFlowStudio/GitFlowStudioUITests/RepositoryUITests/testConflictEditorInteractionPerformance",
+    "testRuns" : [
+      {
+        "device" : {
+          "deviceId" : "54146c271b5e6b6cf9fee984d09eb7751c5e8cdb",
+          "deviceName" : "My Mac"
+        },
+        "metrics" : [
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "CPU Cycles (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_CPU-studio.gitflow.mac.cycles",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kC"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Clock Monotonic Time",
+            "identifier" : "com.apple.dt.XCTMetric_Clock.time.monotonic",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              1.872090422,
+              1.7937287210000001,
+              1.9911166610000002,
+              1.863122082,
+              1.8179083070000002
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "s"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Memory Peak Physical (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-studio.gitflow.mac.physical_peak",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              52218.048,
+              52414.656,
+              52562.112,
+              52709.568,
+              52676.8
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "CPU Time (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_CPU-studio.gitflow.mac.time",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              0.9971935540000001,
+              0.9656606590000001,
+              1.080990256,
+              0.9787093600000001,
+              0.927717086
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "s"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Absolute Memory Physical (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-studio.gitflow.mac.physical_absolute",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              51824.832,
+              52037.824,
+              52168.896,
+              52103.36,
+              51841.216
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "Memory Physical (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_Memory-studio.gitflow.mac.physical",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              966.656,
+              212.992,
+              360.448,
+              -65.536,
+              -262.144
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kB"
+          },
+          {
+            "baselineAverage" : 0,
+            "baselineName" : "",
+            "displayName" : "CPU Instructions Retired (mac)",
+            "identifier" : "com.apple.dt.XCTMetric_CPU-studio.gitflow.mac.instructions_retired",
+            "maxPercentRegression" : 10,
+            "maxPercentRelativeStandardDeviation" : 10,
+            "maxRegression" : 0,
+            "maxStandardDeviation" : 10,
+            "measurements" : [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "polarity" : "prefers smaller",
+            "unitOfMeasurement" : "kI"
+          }
+        ],
+        "testPlanConfiguration" : {
+          "configurationId" : "1",
+          "configurationName" : "Test Scheme Action"
+        }
+      }
+    ]
+  }
+]
