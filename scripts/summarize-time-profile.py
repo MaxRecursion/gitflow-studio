@@ -22,6 +22,7 @@ samples = 0
 weights = collections.Counter()
 threads = collections.Counter()
 unknown = 0
+processes = set()
 for node in root.findall('node'):
     schema = node.find('schema')
     if schema is None or schema.attrib.get('name') != 'time-profile':
@@ -35,6 +36,7 @@ for node in root.findall('node'):
         if weight < 0:
             raise ValueError('Negative sample weight')
         samples += 1
+        processes.add(values['process'].attrib.get('fmt', 'unknown'))
         frame = values['stack'].find('frame')
         name = resolve(frame).attrib.get('name', 'unknown') if frame is not None else 'unknown'
         if name.startswith('0x') or name == 'unknown':
@@ -50,7 +52,8 @@ def milliseconds(value):
     return round(value / 1_000_000, 3)
 
 print(json.dumps({
-    'scope': 'Sampled running-thread weights for GitBenchmarks only; excludes child Git and all SwiftUI UI behavior. Sampling is not an exact CPU-time accounting.',
+    'scope': 'Sampled running-thread weights for the listed trace processes. Sampling is not exact CPU-time accounting; child processes are included only when present in the captured data.',
+    'processes': sorted(processes),
     'samples': samples,
     'total_sampled_weight_ms': milliseconds(sum(weights.values())),
     'main_thread_weight_ms': milliseconds(threads['main']),
