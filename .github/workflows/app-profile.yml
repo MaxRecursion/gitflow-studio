@@ -1,0 +1,39 @@
+name: Native app Instruments capture
+on:
+  workflow_dispatch:
+    inputs:
+      template:
+        description: 'Instruments template'
+        type: choice
+        options: [Allocations, Time Profiler]
+        default: Allocations
+permissions:
+  contents: read
+jobs:
+  app-profile:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build native Release app
+        run: ./scripts/build-app.sh
+      - name: Profile a disposable conflict workspace
+        env:
+          PROFILE_TEMPLATE: ${{ inputs.template }}
+        run: |
+          case "$PROFILE_TEMPLATE" in Allocations|'Time Profiler') ;; *) exit 64;; esac
+          mkdir -p build/profiles/app
+          fixture="$(./scripts/make-conflict-demo.sh)"
+          sw_vers > build/profiles/app/environment.txt
+          xcodebuild -version >> build/profiles/app/environment.txt
+          swift --version >> build/profiles/app/environment.txt
+          sysctl hw.model hw.memsize hw.logicalcpu >> build/profiles/app/environment.txt
+          shasum -a 256 'build/GitFlow Studio.app/Contents/MacOS/GitFlowStudio' > build/profiles/app/build-sha256.txt
+          xcrun xctrace record --template "$PROFILE_TEMPLATE" --time-limit 30s --output build/profiles/app/App.trace --launch -- "$PWD/build/GitFlow Studio.app/Contents/MacOS/GitFlowStudio" --repo "$fixture"
+          xcrun xctrace export --input build/profiles/app/App.trace --toc --output build/profiles/app/table-of-contents.xml
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: Native-app-Instruments-evidence
+          path: build/profiles/app
+          if-no-files-found: error
