@@ -1,0 +1,41 @@
+name: Inspect native UI diagnostics
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Completed workflow run containing the result bundle'
+        required: true
+      artifact:
+        description: 'Exact artifact name'
+        required: true
+        default: platform-macos-15-intel
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Download retained UI result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.run_id }}
+          SOURCE_ARTIFACT: ${{ inputs.artifact }}
+        run: |
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          [[ "$SOURCE_ARTIFACT" == platform-macos-15-intel || "$SOURCE_ARTIFACT" == macOS-validation ]]
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name "$SOURCE_ARTIFACT" --dir evidence
+      - name: Export diagnostics
+        run: |
+          result="$(find evidence -type d -name '*.xcresult' -print -quit)"
+          [[ -n "$result" ]]
+          mkdir -p diagnostics
+          xcrun xcresulttool export diagnostics --path "$result" --output-path diagnostics
+          xcrun xcresulttool get test-results tests --path "$result" > diagnostics/tests.json
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: native-ui-diagnostics
+          path: diagnostics
+          if-no-files-found: error
