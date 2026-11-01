@@ -22,7 +22,7 @@ struct HistoryWorkspace: View {
                                 if !commit.decorations.isEmpty { Text(commit.decorations).font(.caption2.weight(.semibold)).foregroundStyle(.tint).lineLimit(1) }
                                 HStack { Text(commit.author).lineLimit(1); Text(commit.date, style: .date); Spacer(); Text(commit.shortSHA).monospaced() }.font(.caption).foregroundStyle(.secondary)
                             }
-                        }.tag(commit.sha).contextMenu {
+                        }.tag(commit.sha).accessibilityIdentifier("history-commit-" + commit.sha).contextMenu {
                             Button("Copy Commit SHA") { copy(commit.sha) }
                             Button("Check Out Commit…") { checkout(commit) }
                             Button("Reset Here, Keep Staged…") { reset(commit, mode: .soft) }
