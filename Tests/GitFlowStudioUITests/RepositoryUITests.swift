@@ -118,7 +118,11 @@ final class RepositoryUITests: XCTestCase {
         XCTAssertEqual(try git(["ls-files", "-u"]), "")
         XCTAssertEqual(try git(["status", "--porcelain"]), "")
         XCTAssertEqual(try git(["rev-list", "--parents", "-n", "1", "HEAD"]).split(separator: " ").count, 2)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.appendingPathComponent(".git/REBASE_HEAD").path))
+        // REBASE_HEAD can remain as a pseudoref after successful completion.
+        // Active rebase directories and detached HEAD determine the lifecycle.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.appendingPathComponent(".git/rebase-merge").path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fixture.appendingPathComponent(".git/rebase-apply").path))
+        XCTAssertEqual(try git(["symbolic-ref", "--short", "HEAD"]).trimmingCharacters(in: .newlines), "main")
         attachScreenshot(operation + "-continued")
     }
 
