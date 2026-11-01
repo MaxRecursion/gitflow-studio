@@ -43,11 +43,11 @@ final class RepositoryUITests: XCTestCase {
         message.click()
         message.typeText("Native UI commit")
         app.buttons["commit-staged"].click()
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Your working tree is clean")).firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "Your working tree is clean", "Your working tree is clean")).firstMatch.waitForExistence(timeout: 15))
         XCTAssertEqual(try git(["log", "-1", "--format=%s"]).trimmingCharacters(in: .newlines), "Native UI commit")
         XCTAssertEqual(try git(["status", "--porcelain"]), "")
         app.descendants(matching: .any).matching(identifier: "workspace-History").firstMatch.click()
-        XCTAssertTrue(app.staticTexts["Native UI commit"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@ OR value == %@", "Native UI commit", "Native UI commit")).firstMatch.waitForExistence(timeout: 10))
         attachScreenshot("history")
     }
 

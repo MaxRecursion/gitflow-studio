@@ -13,7 +13,8 @@ struct GitFlowStudioApp: App {
             StudioWindow()
                 .frame(minWidth: 960, minHeight: 640)
         }
-        .defaultSize(width: 1340, height: 860)
+        .defaultSize(width: min(1340, max(960, (NSScreen.main?.visibleFrame.width ?? 1364) - 24)),
+                     height: min(860, max(640, (NSScreen.main?.visibleFrame.height ?? 940) - 80)))
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("Open Repository…") { NotificationCenter.default.post(name: .studioOpen, object: nil) }
