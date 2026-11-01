@@ -39,3 +39,11 @@ The 56-test suite also checks multiple-hunk offsets, replacements with independe
 ## Remaining verification
 
 Full rebase/cherry-pick/revert GUI paths, minimum-OS and Intel execution, live-host authentication, dark-appearance visual regression, VoiceOver, keyboard-only coverage, multi-window stress, and XCUITest automation remain outstanding. Service-level integration tests do cover continuation and abort for these Git operations.
+
+## Saved draft recovery — November 1, 2026
+
+The universal Release app opened disposable fixture `gitflow-demo.sAzQAv`. Choosing Incoming changed the result to timeout 60, retries 3 and production, then the native UI showed Saved locally and Saved Drafts (1). The fixture app process was deliberately terminated after that state. On relaunch, the resolver offered a saved draft matching the exact Git state, with editing/staging disabled until an explicit choice. Restore Draft recovered the incoming decision and text.
+
+Mark File Resolved → Write Result and Stage File → Continue → Continue Merge completed through the GUI. Git independently verified commit `9986d0cb5eac20834d79aa2635d74164d352740c`, parents `ccf03fad44832bd1dcebc73555dc336d950e980d` and `8599c9d12c819c5bd06b59a463f68148d5411785`, expected incoming contents and clean status. The screenshot in `Images/merge-workspace.png` shows this generated fixture before termination. No user repository was modified. This verifies one post-autosave termination case, not edits inside the 400 ms debounce window.
+
+The rebuilt quit guard was also exercised after completing the merge: a disposable commit-message draft triggered the native confirmation, Keep Working retained its exact text, and Discard Drafts and Quit completed asynchronous cleanup and terminated the process. No commit was created by this guard test.

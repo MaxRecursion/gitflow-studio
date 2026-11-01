@@ -1,0 +1,58 @@
+{
+  "scope": "Sampled running-thread weights for GitBenchmarks only; excludes child Git and all SwiftUI UI behavior. Sampling is not an exact CPU-time accounting.",
+  "samples": 1024,
+  "total_sampled_weight_ms": 1024.0,
+  "main_thread_weight_ms": 482.0,
+  "other_threads_weight_ms": 542.0,
+  "unsymbolicated_leaf_weight_ms": 5.0,
+  "top_leaf_frames": [
+    {
+      "name": "__unlink",
+      "sampled_weight_ms": 187.0
+    },
+    {
+      "name": "__posix_spawn",
+      "sampled_weight_ms": 90.0
+    },
+    {
+      "name": "__open_dprotected_np",
+      "sampled_weight_ms": 76.0
+    },
+    {
+      "name": "__getattrlist",
+      "sampled_weight_ms": 43.0
+    },
+    {
+      "name": "fsync",
+      "sampled_weight_ms": 37.0
+    },
+    {
+      "name": "start_wqthread",
+      "sampled_weight_ms": 36.0
+    },
+    {
+      "name": "write",
+      "sampled_weight_ms": 32.0
+    },
+    {
+      "name": "poll",
+      "sampled_weight_ms": 32.0
+    },
+    {
+      "name": "getattrlistbulk",
+      "sampled_weight_ms": 16.0
+    },
+    {
+      "name": "__workq_kernreturn",
+      "sampled_weight_ms": 14.0
+    },
+    {
+      "name": "objc_msgSend",
+      "sampled_weight_ms": 12.0
+    },
+    {
+      "name": "close",
+      "sampled_weight_ms": 12.0
+    }
+  ]
+}

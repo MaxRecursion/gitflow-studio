@@ -52,7 +52,7 @@ These entries describe implemented paths. The milestone and automated coverage a
 ## Verification before release
 
 - [ ] Review all working UI commands against their Git effects and confirmations.
-- [ ] Verify Xcode project build on a Mac with full Xcode.
+- [x] Full Xcode 16.4 native project build succeeded on hosted macOS 15.8.2; see GitHub validation runs.
 - [x] Add a native XCUITest target for staging/commit and real merge workflows.
 - [ ] Execute the UI target and verify its results with full Xcode.
 - [ ] Validate macOS 14 and Intel execution; the development host is arm64 macOS 27.
@@ -80,6 +80,7 @@ Repository safety takes precedence over covering an unsupported case with a misl
 - [x] Developer ID/notarytool pipeline with checksum manifests and fail-closed signing checks; local preview archive.
 - [x] Worktree existing-branch creation, move, lock/unlock and reviewed prune; real Git tests.
 - [x] Git subprocess/operation Instruments intervals and bounded capture script.
-- [ ] Actual Instruments recording: full Xcode/xctrace absent locally.
+- [x] Hosted Instruments Time Profiler service capture retained with environment/hash/TOC; no local xctrace.
+- [ ] UI/child-Git CPU, allocations, startup and scrolling traces.
 - [ ] Developer ID signing/notarization: no Apple Developer team or certificate configured.
 - [ ] App Store sandbox and runtime architecture: separate gate selected by user.

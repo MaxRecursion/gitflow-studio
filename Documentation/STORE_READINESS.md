@@ -33,12 +33,12 @@ Re-audit the exact store binary, any bundled Git/dependencies, final sandbox sto
 
 ## Release acceptance gates
 
-- [ ] Full Xcode installation and Xcode project build.
+- [x] Hosted Xcode 16.4 native project build on macOS 15.8.2. Local full Xcode remains absent.
 - [ ] Native XCUITest execution on supported macOS; test source exists but is not yet executed.
 - [ ] macOS 14 and Intel runtime verification (cross-compilation is not execution).
 - [ ] Instruments traces for CPU/allocations, startup, editor scrolling, history and idle behavior.
 - [ ] Remaining parity and conflict edge cases in `DESKTOP_PARITY.md` and `ROADMAP.md`.
-- [ ] No post-cancellation descendant Git hook activity; regression tests and cancellation policy verified.
+- [x] Two real-hook cancellation/timeout tests verify ordinary descendants in the isolated process group stop before return. Detached/escaped jobs remain a limitation; abrupt cancellation can leave Git locks.
 - [ ] Developer ID certificate, hardened-runtime signature, accepted notarization, verified staple, Gatekeeper and clean-machine installation.
 - [ ] Sandbox/runtime feasibility gates above for a separate store build.
 - [ ] Registered bundle identifier, App Store Connect record, developer identity and support/privacy URLs.

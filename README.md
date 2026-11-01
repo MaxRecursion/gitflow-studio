@@ -2,7 +2,9 @@
 
 A native macOS Git client built with Swift 6, SwiftUI, AppKit, and the installed Git CLI. The main workflow is an index-aware three-way conflict workspace with editable results and explicit staging and continuation.
 
-This is a working engineering preview, not a certified production release. See [ROADMAP.md](ROADMAP.md) for verified scope and remaining work. There is no web frontend, backend service, account requirement, telemetry, or third-party package dependency.
+This is a working engineering preview, not a certified production release. See [release status](Documentation/RELEASE_STATUS.md) and [ROADMAP.md](ROADMAP.md) for verified scope and remaining work. There is no web frontend, backend service, account requirement, telemetry, or third-party package dependency.
+
+![Native three-way merge workspace showing a generated conflict, incoming selection and a locally saved result.](Documentation/Images/merge-workspace.png)
 
 ## Build and run
 

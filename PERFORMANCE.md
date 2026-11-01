@@ -7,7 +7,7 @@
 - Apple Swift 6.4 (`swiftlang-6.4.0.34.1`, `clang-2100.3.34.1`).
 - Git 2.54.0, selected from `/opt/homebrew/bin/git` by the app's discovery order. The shell's system Git also reports Apple Git 2.54.0 (Apple Git-157).
 - Xcode Command Line Tools at `/Library/Developer/CommandLineTools`.
-- Full Xcode and `xctrace` are not installed. Instruments traces have not been collected.
+- Full Xcode and `xctrace` are not installed locally. A real hosted Instruments service trace is documented below.
 
 ## Benchmark protocol
 
@@ -17,15 +17,15 @@ The suite measures repository opening, status refresh, the first 100 history ent
 
 ## Measured results
 
-The completed Release run is recorded in [Documentation/benchmark-results.json](Documentation/benchmark-results.json), timestamped `2026-11-01T02:22:48Z`.
+The latest Release run is recorded in [Documentation/benchmark-release-preview.json](Documentation/benchmark-release-preview.json), timestamped `2026-11-01T10:54:44Z`. Compilation completed before this run; fixture setup and teardown are outside the samples. Earlier measurements remain in `Documentation/benchmark-results.json`.
 
 | Operation | Median | p95 | Samples |
 |---|---:|---:|---:|
-| Open repository | 3.33 ms | 3.66 ms | 30 |
-| Status, 1,000 tracked files | 5.40 ms | 6.33 ms | 30 |
-| First 100 history entries | 10.59 ms | 11.68 ms | 30 |
-| Small unstaged diff | 4.11 ms | 5.28 ms | 30 |
-| Git version subprocess | 3.02 ms | 3.22 ms | 30 |
+| Open repository | 3.25 ms | 3.57 ms | 30 |
+| Status, 1,000 tracked files | 5.62 ms | 6.98 ms | 30 |
+| First 100 history entries | 10.94 ms | 12.58 ms | 30 |
+| Small unstaged diff | 4.07 ms | 4.74 ms | 30 |
+| Git version subprocess | 3.14 ms | 3.69 ms | 30 |
 
 The measured status operation is below the 100 ms engineering target on this fixture and host. This does not establish the same result for repositories with slow storage, filters, submodules, or many untracked files. The subprocess baseline accounts for a substantial part of each small operation's wall time. CPU load and power state were not controlled; these numbers are a reproducible local baseline rather than a cross-machine guarantee.
 
@@ -49,8 +49,8 @@ Do not change repositories, interact with the window, or run a Git operation dur
 |---|---:|---|
 | Warm app startup | <500 ms | Not measured |
 | Idle CPU | Near zero | No measurable CPU-time increase over a 30-second `ps` sample; Instruments pending |
-| Typical idle memory | <150 MB | Small fixture: 137.52 MiB RSS; physical footprint and larger repositories unmeasured |
-| Small-repository status | <100 ms where Git permits | 5.40 ms median / 6.33 ms p95 on the recorded fixture |
+| Typical idle memory | <150 MB | Latest small fixture: 146.50 MiB RSS (153.62 MB); physical footprint and larger repositories unmeasured |
+| Small-repository status | <100 ms where Git permits | 5.62 ms median / 6.98 ms p95 on the latest fixture |
 | Ordinary UI interaction | <16 ms | Not measured |
 | Large history and editor scrolling | Smooth | Needs frame profiling |
 
@@ -73,3 +73,17 @@ Measure warm startup from launch to usable window separately from SwiftPM build 
 The local invocation returned exit 69: xctrace is unavailable under the selected Command Line Tools directory. No Instruments trace was recorded locally. Full Xcode remains necessary for this capture path. The existing service/idle figures above describe earlier recorded binaries, not a claim that the current universal build has identical timings.
 
 The Release universal cross-build succeeded for arm64 and x86_64. This is compile/link evidence; the development host cannot verify Intel runtime performance or minimum macOS behavior.
+
+## Hosted Instruments evidence — November 1, 2026
+
+A real Time Profiler capture completed on a GitHub-hosted Apple Silicon VM: macOS 15.8.2 (24H232), Xcode 16.4 (16F6), Swift 6.1.2, VirtualMac2,1, 3 logical CPUs and 7 GiB RAM. [Capture run](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41298382422) retained the trace, table of contents, environment and executable SHA-256. The trace records GitBenchmarks from 10:40:10.169Z through 10:40:26.851Z (16.681659 seconds), ending with the target's normal exit status 0.
+
+Local artifact: `build/profiles/hosted-service/GitServices.trace`. Executable SHA-256: `a577d82e29cb49556390f731bbc8a7ec7213cb8abe4f716850a5501ed2038f8e`. The measured executable creates the 1,000-file / 100-commit fixture and performs the service benchmark suite. This captures the benchmark process, not the SwiftUI app or its child Git processes. It does not establish application startup, editor latency, allocations, idle footprint or scrolling acceptance. Instrumented duration includes fixture construction and profiler overhead. Those UI and resource traces remain required.
+
+The exported profile contains 1,024 running-thread samples with 1,024 ms total sampled weight: 482 ms on the benchmark main thread and 542 ms on other threads. The largest leaf weights are `__unlink` (187 ms), `__posix_spawn` (90 ms), `__open_dprotected_np` (76 ms), `__getattrlist` (43 ms) and `fsync` (37 ms). Only 5 ms has an unsymbolicated leaf. See [the summary](Documentation/instruments-service-summary.json). Reproduce it with `python3 scripts/summarize-time-profile.py time-profile.xml`.
+
+The filesystem-heavy result includes creating and removing the disposable fixture; it does not justify changing repository semantics or diagnosing a SwiftUI bottleneck. The next useful profile separates steady-state service intervals from setup/teardown and includes Git child processes. Main-thread samples here belong to a command-line benchmark, not the app's UI thread. The [export run](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41298711377) retains the sampled XML alongside the original trace.
+
+## Final preview idle sample
+
+The final local universal app was sampled after 30 seconds of warmup with a clean one-file/four-commit fixture and Changes visible. [The new record](Documentation/idle-release-preview.json) has 31 samples over 30.01 seconds: median RSS **146.50 MiB**, peak **146.55 MiB**, and no CPU-time increase measurable at `ps` precision. Executable SHA-256: `12534acb803f8b032b23ae0fe2430dad92e262037d8c0c833535472e9c58213e`. The earlier 137.52 MiB observation refers to an older binary and fixture. Neither record establishes typical physical footprint or a large-repository memory guarantee.

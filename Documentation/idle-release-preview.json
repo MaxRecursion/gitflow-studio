@@ -1,0 +1,172 @@
+{
+  "timestamp_utc": "2026-11-01T10:56:02.892876+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "pid": 40594,
+  "fixture": "Final universal Release, clean 1-file 4-commit merge fixture, Changes visible, no worktrees",
+  "executable_sha256": "12534acb803f8b032b23ae0fe2430dad92e262037d8c0c833535472e9c58213e",
+  "duration_seconds": 30.009217957999997,
+  "sample_count": 31,
+  "warmup_seconds": 30,
+  "cpu_seconds_delta": 0.0,
+  "average_cpu_percent_one_core": 0.0,
+  "rss_median_mib": 146.5,
+  "rss_peak_mib": 146.546875,
+  "notes": "ps CPU time has limited precision. RSS is resident pages, not physical footprint. Only the app process is sampled; no Git operation should run during sampling.",
+  "samples": [
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150016,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150064,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150064,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150064,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150064,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150064,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    },
+    {
+      "cpu_percent_ps": 0.0,
+      "rss_kib": 150032,
+      "cpu_seconds": 1.15
+    }
+  ]
+}
