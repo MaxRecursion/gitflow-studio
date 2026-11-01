@@ -4,10 +4,17 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      diagnostic_run:
+        description: 'Optional failed run ID to export its native UI diagnostics'
+        required: false
+        default: ''
 permissions:
   contents: read
+  actions: read
 jobs:
   build-and-test:
+    if: inputs.diagnostic_run == ''
     runs-on: macos-15
     timeout-minutes: 25
     steps:
@@ -26,6 +33,12 @@ jobs:
         run: UNIVERSAL=1 ./scripts/build-app.sh
       - name: Native UI regression tests
         run: xcodebuild -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -resultBundlePath build/UITests.xcresult test
+      - name: Export native UI attachments
+        if: always()
+        run: |
+          if [[ -d build/UITests.xcresult ]]; then
+            xcrun xcresulttool export attachments --path build/UITests.xcresult --output-path build/UIAttachments
+          fi
       - name: Archive local preview
         run: ./scripts/release.sh preview --app 'build/GitFlow Studio.app' --output build/releases/ci-preview
       - uses: actions/upload-artifact@v7.0.2
@@ -35,4 +48,27 @@ jobs:
           path: |
             build/releases/ci-preview
             build/UITests.xcresult
+            build/UIAttachments
           if-no-files-found: warn
+
+  inspect-ui-failure:
+    if: inputs.diagnostic_run != ''
+    runs-on: macos-15
+    timeout-minutes: 5
+    steps:
+      - name: Download the requested result bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.diagnostic_run }}
+        run: |
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name macOS-validation --dir evidence
+      - name: Export failure attachments and test summary
+        run: |
+          xcrun xcresulttool export attachments --path evidence/UITests.xcresult --output-path attachments
+          xcrun xcresulttool get test-results tests --path evidence/UITests.xcresult > attachments/tests.json
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: native-ui-diagnostics
+          path: attachments
