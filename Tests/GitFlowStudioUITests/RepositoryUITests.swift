@@ -47,7 +47,14 @@ final class RepositoryUITests: XCTestCase {
         XCTAssertEqual(try git(["log", "-1", "--format=%s"]).trimmingCharacters(in: .newlines), "Native UI commit")
         XCTAssertEqual(try git(["status", "--porcelain"]), "")
         app.descendants(matching: .any).matching(identifier: "workspace-History").firstMatch.click()
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@ OR value == %@", "Native UI commit", "Native UI commit")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.textFields["Search commit messages"].waitForExistence(timeout: 10))
+        // Native List rows may expose a combined accessibility label rather
+        // than a separate subject StaticText on different macOS/CPU runners.
+        let commit = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "Native UI commit", "Native UI commit")).firstMatch
+        XCTAssertTrue(commit.waitForExistence(timeout: 10))
+        commit.click()
+        let sha = try git(["rev-parse", "HEAD"]).trimmingCharacters(in: .newlines)
+        XCTAssertTrue(app.buttons[String(sha.prefix(8))].waitForExistence(timeout: 10))
         attachScreenshot("history")
     }
 
