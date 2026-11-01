@@ -1,0 +1,47 @@
+# Architecture
+
+## Modules
+
+`GitCore` is a Swift 6 library without UI dependencies. It owns process execution, machine-readable parsing, repository operations, conflict snapshots, and merge-document transformations. `GitFlowStudio` is a SwiftUI executable with AppKit text editing. `GitBenchmarks` is an independent executable using the same service layer. Tests create real temporary repositories.
+
+The minimum deployment target is macOS 14, allowing modern Observation and SwiftUI APIs without compatibility wrappers. The package has no external dependencies. An Xcode application target consumes the local library and the same app sources.
+
+## Git process boundary
+
+`GitProcessRunner` invokes an executable URL with argument arrays. It never invokes a shell for repository operations. Global literal pathspec behavior and option separators protect unusual paths from becoming options or Git pathspec patterns. Status and conflict parsing use NUL-delimited output.
+
+Process execution and concurrent stdout/stderr drainage happen off the main thread. Captures have explicit byte ceilings; oversized output produces an error rather than consuming unlimited memory. Timeouts and structured-concurrency cancellation terminate the process. The runner exposes an optional Sendable stdout chunk callback and returns bounded completed output. The UI currently displays operation-level busy/cancel state, not fine-grained transfer percentages. Timeouts also cover pipe handles retained by a child process after Git exits. On macOS the runner verifies a distinct process group after launch and synchronously kills that group on cancellation/timeout, keeping ordinary hook children from mutating after return. Two real-hook regression tests verify cancellation and timeout. Programs that deliberately detach from that group remain outside this guarantee; abrupt cancellation may leave Git locks, which are never removed automatically.
+
+Git configuration and hooks remain authoritative. Editor commands are noninteractive, terminal authentication prompts are disabled, and normal credential helpers and the inherited SSH agent are retained. OSLog records operation outcomes without repository contents or command arguments. Credential-bearing URL user-info is redacted from displayed errors.
+
+## Repository concurrency
+
+`GitRepository` is an actor. A shared gate keyed by the canonical absolute common Git directory serializes mutations across repository instances and linked worktrees, including their shared configuration. Symlink aliases resolve to the same key; unrelated repositories remain independent. Cancelled waiters leave the queue promptly. Multi-command mutations use `transaction` so index validation, writing, and staging occupy one gate. Git's index lock still protects against simultaneous external Git writers. No in-process mutex can prevent external tools from editing files, so conflict snapshots are checked again before writes.
+
+Concurrent status callers share an in-flight task. Mutations invalidate pending status reads. Presentation tasks cancel stale selection reads, and the app uses FSEvents with debouncing rather than periodic polling. Worktree and Git-directory events trigger fresh status; Git determines the resulting state.
+
+## Conflict authority and presentation
+
+Unmerged index stages from `git ls-files -u -z` determine whether a path is conflicted. Stage 1 is the ancestor, stage 2 the current index side, and stage 3 the incoming side. Operation metadata is located through Git paths so linked worktrees can resolve their own state. Rebase labels explain that the current side is the new base and the incoming side is the replayed commit.
+
+For supported text, Git's own `merge-file` creates a three-way merge representation. Unique labels distinguish generated conflict boundaries from user text. Region selections update a shared merge document; the result is editable. Binary data, symlinks, and delete/modify cases use explicit whole-version or deletion choices instead of a misleading text editor. Saves compare captured state, write safely, stage the chosen result, and refresh authoritative conflict status. Continuing and aborting call Git's native operation commands after explicit user action.
+
+Advanced rename graphs, file/directory conflicts, submodules, arbitrary encodings, and very large files require additional hardening. Refusal to edit an unsupported case is preferable to inventing a resolution. See the roadmap for precise limitations.
+
+## UI and persistence
+
+The main window has native navigation, toolbars, sheets, system colors, and standard macOS dialogs. Lists are lazy; history is paginated. Native text views provide selection, editing, scrolling, undo, and standard text commands. App state is main-actor isolated; Git work does not run on the main actor. Recent repositories and lightweight preferences use UserDefaults, without a database or cloud service.
+
+`GitWorkspaceService` manages local identity, coauthor validation, worktrees, guarded latest-commit undo, and root ignore-file editing. Ignore files are opened with `O_NOFOLLOW | O_NONBLOCK`, checked with `fstat`, and read with an explicit byte limit. This rejects symlinks and special files without blocking on FIFOs. Saves compare the snapshot and atomically rename a temporary file. Git configuration keeps Git's native lock behavior; separate identity keys are not a single atomic external transaction.
+
+`WordDifference` computes bounded lexical differences off the main actor for the selected conflict. Only unique source matches receive UTF-16 highlights; ambiguous or oversized mappings are omitted. Native text panes soft-wrap to their widths, recolor the edited paragraph, and clip custom ruler drawing to the gutter. The ruler index is updated from edit deltas.
+
+## Safety boundaries
+
+The app does not offer automatic force pushes, hard resets, or forced deletion of unmerged branches. Review and confirmation are separate from execution for destructive actions. The app is unsandboxed to support ordinary installed Git infrastructure. Distribution, signing, sandbox considerations, and release gaps are documented in the README and roadmap.
+
+Hunk application, individual-line application, and unstaged discard validate the displayed diff inside the mutation gate. Editable diffs force a/b prefixes and standard addition/deletion/context indicators regardless of presentation configuration. Selected lines produce a reduced patch with recomputed source/target offsets; unstaging reverses the change direction before reducing it. Git checks and applies the result to its index. Neither path edits the working file. Native line-selection rows are prepared once off the main actor and reuse the parsed data as selections change.
+
+Path-bearing status/index records, repository/worktree paths, and editable patches require valid UTF-8. Invalid byte sequences produce an error instead of replacement-character aliases. Whole-file staging remains byte preserving for valid paths with non-UTF-8 content. Batch stage/unstage use NUL-delimited pathspec stdin to avoid command-line length limits. Rebase, merge, cherry-pick and revert return structured completion/conflict outcomes. Push uses an explicit branch refspec and never requests force.
+
+Conflict drafts remain in the window model across workspace navigation. Switching repositories, closing a window, or quitting warns before dropping an unsaved draft or commit message. A main-thread AppKit delegate proxy forwards existing SwiftUI window behavior while adding the close decision; an app registry checks all windows before quitting. Running operations block close until finished or cancelled. The reconstructed draft is labeled explicitly; Preview/Use Working File preserves access to edits that predate opening the resolver, and writing/staging requires confirmation. ConflictDraftStore atomically saves bounded private local recovery copies after 400 ms. Fingerprints cover operation metadata, HEAD, index stages, source bytes and the working snapshot. Exact matches can be explicitly restored; stale copies are review/export only. Five storage tests cover recovery, staleness, corruption, quotas and symlinks. Explicit discard awaits removal before close/switch/quit. The debounce window is not crash-proof and commit messages are not persisted.

@@ -1,0 +1,109 @@
+import SwiftUI
+import AppKit
+import GitCore
+
+struct HistoryWorkspace: View {
+    @Bindable var model: StudioModel
+    @ViewState private var compareRevision = "HEAD"
+    var body: some View {
+        HSplitView {
+            VStack(spacing: 0) {
+                HStack { Text("History").font(.title2.weight(.semibold)); Spacer(); Text("\(model.commits.count) loaded").font(.caption).foregroundStyle(.secondary) }.padding(16)
+                TextField("Search commit messages", text: $model.search).textFieldStyle(.roundedBorder).padding(.horizontal, 14).padding(.bottom, 12)
+                    .onSubmit { Task { await model.loadSection() } }
+                Divider()
+                let graph = CommitGraph.layout(model.commits)
+                List(selection: $model.selectedCommit) {
+                    ForEach(Array(model.commits.enumerated()), id: \.element.sha) { index, commit in
+                        HStack(spacing: 10) {
+                            GraphLane(row: graph[index]).frame(width: CGFloat(graph[index].width) * 14 + 16, height: 60).accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(commit.subject).font(.callout.weight(.medium)).lineLimit(2)
+                                if !commit.decorations.isEmpty { Text(commit.decorations).font(.caption2.weight(.semibold)).foregroundStyle(.tint).lineLimit(1) }
+                                HStack { Text(commit.author).lineLimit(1); Text(commit.date, style: .date); Spacer(); Text(commit.shortSHA).monospaced() }.font(.caption).foregroundStyle(.secondary)
+                            }
+                        }.tag(commit.sha).contextMenu {
+                            Button("Copy Commit SHA") { copy(commit.sha) }
+                            Button("Compare with HEAD") { model.compare(commit.sha, to: "HEAD") }
+                            Button("Cherry-pick…") { confirm(.cherryPick, commit) }.disabled(commit.parents.count > 1)
+                            Button("Revert…") { confirm(.revert, commit) }.disabled(commit.parents.count > 1)
+                        }
+                    }
+                    if model.historyHasMore { Button("Load 100 More Commits", action: model.loadMoreHistory).disabled(model.busy != nil) }
+                }.listStyle(.inset)
+            }.frame(minWidth: 340, idealWidth: 470, maxWidth: 700)
+            VStack(spacing: 0) {
+                if let commit = model.commits.first(where: { $0.sha == model.selectedCommit }) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(commit.subject).font(.title3.weight(.semibold)).textSelection(.enabled)
+                        HStack {
+                            Text(commit.author).foregroundStyle(.secondary)
+                            Spacer()
+                            Button(commit.shortSHA) { copy(commit.sha) }.font(.system(.caption, design: .monospaced)).help("Copy full SHA")
+                            Menu("Actions") {
+                                Button("Cherry-pick…") { confirm(.cherryPick, commit) }.disabled(commit.parents.count > 1)
+                                Button("Revert…") { confirm(.revert, commit) }.disabled(commit.parents.count > 1)
+                            }
+                        }
+                        if !commit.parents.isEmpty {
+                            HStack { Text("Parents").foregroundStyle(.secondary); ForEach(commit.parents, id: \.self) { sha in Button(String(sha.prefix(8))) { model.preview("Parent " + String(sha.prefix(8)), arguments: ["show", "--no-ext-diff", "--no-textconv", sha, "--"]) }.font(.caption.monospaced()) } }
+                        }
+                        HStack { TextField("Compare to branch or SHA", text: $compareRevision).textFieldStyle(.roundedBorder); Button("Compare") { model.compare(commit.sha, to: compareRevision) }.disabled(compareRevision.isEmpty) }
+                    }.padding(16)
+                    Divider()
+                    DiffTextView(text: model.commitDetail)
+                } else { ContentUnavailableView("Every change has a story", systemImage: "clock.arrow.circlepath", description: Text("Select a commit to inspect its details and changes.")) }
+            }.frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
+        }.onChange(of: model.selectedCommit) { _, _ in model.loadCommit() }
+    }
+    private func copy(_ sha: String) { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(sha, forType: .string) }
+    private func confirm(_ operation: GitOperation, _ commit: GitCommit) {
+        model.confirm(operation == .revert ? "Revert Commit" : "Cherry-pick Commit", "Apply \(operation == .revert ? "the inverse of" : "the changes from") \(commit.shortSHA) to \(model.status.branch)? This creates a commit when successful; conflicts open in the resolver.") {
+            model.integrate(operation, revision: commit.sha)
+        }
+    }
+}
+
+struct CommitGraph {
+    struct Edge { let from: Int; let to: Int }
+    struct Row { let lane: Int; let before: [Int]; let edges: [Edge]; let width: Int; let merge: Bool }
+    static func layout(_ commits: [GitCommit]) -> [Row] {
+        var lanes: [String] = [], rows: [Row] = []
+        for commit in commits {
+            if !lanes.contains(commit.sha) { lanes.append(commit.sha) }
+            let before = lanes
+            let lane = lanes.firstIndex(of: commit.sha)!
+            lanes.remove(at: lane)
+            for parent in commit.parents.reversed() where !lanes.contains(parent) { lanes.insert(parent, at: min(lane, lanes.count)) }
+            var edges: [Edge] = []
+            for (index, sha) in before.enumerated() where sha != commit.sha {
+                if let target = lanes.firstIndex(of: sha) { edges.append(Edge(from: index, to: target)) }
+            }
+            for parent in commit.parents { if let target = lanes.firstIndex(of: parent) { edges.append(Edge(from: lane, to: target)) } }
+            rows.append(Row(lane: lane, before: Array(before.indices), edges: edges, width: max(before.count, lanes.count), merge: commit.parents.count > 1))
+        }
+        return rows
+    }
+}
+
+struct GraphLane: View {
+    let row: CommitGraph.Row
+    private let colors: [Color] = [.blue, .purple, .teal, .orange, .pink, .green]
+    var body: some View {
+        Canvas { context, size in
+            let mid = size.height / 2
+            func x(_ lane: Int) -> CGFloat { CGFloat(lane) * 14 + 8 }
+            for lane in row.before {
+                var path = Path(); path.move(to: CGPoint(x: x(lane), y: 0)); path.addLine(to: CGPoint(x: x(lane), y: mid))
+                context.stroke(path, with: .color(colors[lane % colors.count].opacity(0.6)), lineWidth: 1.7)
+            }
+            for edge in row.edges {
+                var path = Path(); path.move(to: CGPoint(x: x(edge.from), y: mid)); path.addCurve(to: CGPoint(x: x(edge.to), y: size.height), control1: CGPoint(x: x(edge.from), y: size.height * 0.8), control2: CGPoint(x: x(edge.to), y: size.height * 0.8))
+                context.stroke(path, with: .color(colors[edge.from % colors.count].opacity(0.6)), lineWidth: 1.7)
+            }
+            let circle = Path(ellipseIn: CGRect(x: x(row.lane) - 4, y: mid - 4, width: 8, height: 8))
+            context.fill(circle, with: .color(colors[row.lane % colors.count]))
+            if row.merge { context.stroke(circle, with: .color(.primary), lineWidth: 1) }
+        }
+    }
+}

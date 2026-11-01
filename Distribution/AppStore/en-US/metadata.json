@@ -1,0 +1,23 @@
+{
+  "status": "draft-not-submission-ready",
+  "name": "GitFlow Studio",
+  "subtitle": "Native Git and visual merges",
+  "bundle_id": "studio.gitflow.mac",
+  "bundle_id_status": "provisional-unregistered",
+  "version": "0.1.0",
+  "primary_category": "DEVELOPER_TOOLS",
+  "minimum_macos": "14.0",
+  "keywords": "git,merge,conflict,commit,branch,repository,diff,version control,developer",
+  "description": "A native Git workspace for macOS. Review changes, stage files, hunks or individual lines, create commits, and explore repository history. Manage branches, remotes, stashes, tags and linked worktrees.\n\nResolve supported text conflicts with current and incoming versions above an editable merged result. Choose individual conflict regions, review the result, then explicitly stage and continue the Git operation.\n\nGitFlow Studio uses your installed Git and existing authentication infrastructure. No GitFlow Studio account or telemetry is required.",
+  "support_url": null,
+  "privacy_policy_url": null,
+  "marketing_url": null,
+  "copyright": null,
+  "team_id": null,
+  "app_store_connect_app_id": null,
+  "review_contact": null,
+  "pricing_and_availability": null,
+  "age_rating_questionnaire": null,
+  "export_compliance_answers": null,
+  "review_notes": "DRAFT: Do not submit the current unsandboxed build to the Mac App Store. Sandbox, Git runtime availability and authentication compatibility remain release gates. No demo account is required for local workflows. Test steps will use an included disposable fixture."
+}

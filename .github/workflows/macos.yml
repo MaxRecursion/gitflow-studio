@@ -1,0 +1,38 @@
+name: Native macOS validation
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Record environment
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+          git --version
+      - name: Real Git integration tests
+        run: ./scripts/test.sh
+      - name: Native Xcode build
+        run: xcodebuild -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Universal local app
+        run: UNIVERSAL=1 ./scripts/build-app.sh
+      - name: Native UI regression tests
+        run: xcodebuild -project GitFlowStudio.xcodeproj -scheme GitFlowStudio -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -resultBundlePath build/UITests.xcresult test
+      - name: Archive local preview
+        run: ./scripts/release.sh preview --app 'build/GitFlow Studio.app' --output build/releases/ci-preview
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: macOS-validation
+          path: |
+            build/releases/ci-preview
+            build/UITests.xcresult
+          if-no-files-found: warn

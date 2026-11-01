@@ -1,0 +1,169 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+        B10000000000000000000001 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Resources/AppIcon.icns; sourceTree = "<group>"; };
+        B10000000000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+        B10000000000000000000003 = {isa = PBXBuildFile; fileRef = B10000000000000000000001; };
+        B10000000000000000000004 = {isa = PBXBuildFile; fileRef = B10000000000000000000002; };
+        B10000000000000000000005 /* GitFlowStudioUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Tests/GitFlowStudioUITests; sourceTree = "<group>"; };
+        B10000000000000000000006 /* GitFlowStudioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GitFlowStudioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+        B10000000000000000000007 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        B10000000000000000000008 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        B10000000000000000000009 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        B1000000000000000000000A = {isa = PBXContainerItemProxy; containerPortal = A1000000000000000000000D; proxyType = 1; remoteGlobalIDString = A10000000000000000000009; remoteInfo = GitFlowStudio; };
+        B1000000000000000000000B = {isa = PBXTargetDependency; target = A10000000000000000000009; targetProxy = B1000000000000000000000A; };
+        B1000000000000000000000C /* GitFlowStudioUITests */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = B1000000000000000000000F;
+            buildPhases = (B10000000000000000000007, B10000000000000000000008, B10000000000000000000009);
+            buildRules = ();
+            dependencies = (B1000000000000000000000B);
+            fileSystemSynchronizedGroups = (B10000000000000000000005);
+            name = GitFlowStudioUITests;
+            productName = GitFlowStudioUITests;
+            productReference = B10000000000000000000006;
+            productType = "com.apple.product-type.bundle.ui-testing";
+        };
+        B1000000000000000000000D = {isa = XCBuildConfiguration; buildSettings = {
+            CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
+            GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
+            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
+        }; name = Debug; };
+        B1000000000000000000000E = {isa = XCBuildConfiguration; buildSettings = {
+            CODE_SIGNING_ALLOWED = NO; CODE_SIGN_STYLE = Automatic;
+            GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac.uitests;
+            PRODUCT_NAME = "$(TARGET_NAME)"; TEST_TARGET_NAME = GitFlowStudio;
+            SWIFT_VERSION = 6.0; MACOSX_DEPLOYMENT_TARGET = 14.0;
+        }; name = Release; };
+        B1000000000000000000000F = {isa = XCConfigurationList; buildConfigurations = (B1000000000000000000000D, B1000000000000000000000E); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+
+		A10000000000000000000001 /* GitCore in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000002 /* GitCore */; };
+		A10000000000000000000003 /* GitFlow Studio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GitFlow Studio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000005 /* GitFlowStudio */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/GitFlowStudio;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (A10000000000000000000001 /* GitCore in Frameworks */);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000007 = {
+			isa = PBXGroup;
+			children = (B10000000000000000000001, B10000000000000000000002, B10000000000000000000005, A10000000000000000000005 /* GitFlowStudio */, A10000000000000000000004 /* Info.plist */, A10000000000000000000008 /* Products */);
+			sourceTree = "<group>";
+		};
+		A10000000000000000000008 /* Products */ = {
+			isa = PBXGroup;
+			children = (A10000000000000000000003 /* GitFlow Studio.app */, B10000000000000000000006);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000009 /* GitFlowStudio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000000000000000000000A;
+			buildPhases = (A1000000000000000000000B /* Sources */, A10000000000000000000006 /* Frameworks */, A1000000000000000000000C /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (A10000000000000000000005 /* GitFlowStudio */);
+			name = GitFlowStudio;
+			packageProductDependencies = (A10000000000000000000002 /* GitCore */);
+			productName = "GitFlow Studio";
+			productReference = A10000000000000000000003 /* GitFlow Studio.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1000000000000000000000D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = {A10000000000000000000009 = {CreatedOnToolsVersion = 16.0; }; }; };
+			buildConfigurationList = A1000000000000000000000E;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = A10000000000000000000007;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (A1000000000000000000000F /* Local GitCore package */);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A10000000000000000000008;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (A10000000000000000000009 /* GitFlowStudio */, B1000000000000000000000C);
+		};
+		A1000000000000000000000B /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A1000000000000000000000C /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000003, B10000000000000000000004); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				ONLY_ACTIVE_ARCH = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+			};
+			name = Debug;
+		};
+		A10000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+			};
+			name = Release;
+		};
+		A10000000000000000000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = GitFlowStudio;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac;
+				PRODUCT_NAME = "GitFlow Studio";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		A10000000000000000000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = GitFlowStudio;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = studio.gitflow.mac;
+				PRODUCT_NAME = "GitFlow Studio";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		A1000000000000000000000A = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000012, A10000000000000000000013); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A1000000000000000000000E = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000010, A10000000000000000000011); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A1000000000000000000000F /* Local GitCore package */ = {isa = XCLocalSwiftPackageReference; relativePath = .; };
+		A10000000000000000000002 /* GitCore */ = {isa = XCSwiftPackageProductDependency; package = A1000000000000000000000F; productName = GitCore; };
+	};
+	rootObject = A1000000000000000000000D /* Project object */;
+}
