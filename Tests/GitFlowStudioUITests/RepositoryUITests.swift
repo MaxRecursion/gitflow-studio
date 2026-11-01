@@ -168,7 +168,7 @@ final class RepositoryUITests: XCTestCase {
     func testWarmApplicationLaunchPerformance() throws {
         try setUpFixture(); defer { cleanUpFixture() }
         let options = XCTMeasureOptions(); options.iterationCount = 3
-        options.invocationOptions = [.manuallyStart]
+        options.invocationOptions = [.manuallyStart, .manuallyStop]
         // The launch-specific metric returns no data (and can assert during
         // harvest) on hosted macOS. Use a wall-clock interval, excluding termination.
         // It includes XCTest's launch/idle synchronization, not just app startup.
