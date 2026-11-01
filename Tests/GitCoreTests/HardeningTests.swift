@@ -93,11 +93,13 @@ import Testing
     try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: root) }
     let script = root.appendingPathComponent("fixture")
-    try Data("#!/bin/sh\n/bin/sleep 1 &\nexit 0\n".utf8).write(to: script)
+    try Data("#!/bin/sh\n/bin/sleep 10 &\nexit 0\n".utf8).write(to: script)
     try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: script.path)
     let started = ContinuousClock.now
     await #expect(throws: GitError.self) { try await GitProcessRunner(executable: script).run([], timeout: 0.05) }
-    #expect(started.duration(to: .now) < .milliseconds(900))
+    // Leave scheduler headroom on shared CI hosts while remaining well below
+    // the descendant's ten-second lifetime.
+    #expect(started.duration(to: .now) < .seconds(5))
 }
 
 @Test func staleDiscardIsRejected() async throws {
