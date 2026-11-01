@@ -3,6 +3,31 @@ import Testing
 @testable import GitCore
 
 struct ProcessGroupTests {
+    @Test func deadlinesRemainLiveDuringConcurrentPipeDrainage() async throws {
+        let fixture = try await CoreFixture.make()
+        defer { fixture.remove() }
+        let script = fixture.root.appendingPathComponent("held-pipes")
+        try Data("#!/bin/sh\n/bin/sleep 10 &\nexit 0\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+        let started = ContinuousClock.now
+        let outcomes = await withTaskGroup(of: Bool.self, returning: [Bool].self) { group in
+            for _ in 0..<16 {
+                group.addTask {
+                    do {
+                        _ = try await GitProcessRunner(executable: script).run([], timeout: 0.1)
+                        return false
+                    } catch GitError.timedOut { return true }
+                    catch { return false }
+                }
+            }
+            var results: [Bool] = []
+            for await result in group { results.append(result) }
+            return results
+        }
+        #expect(outcomes.count == 16 && outcomes.allSatisfy { $0 })
+        #expect(started.duration(to: .now) < .seconds(5))
+    }
+
     @Test func cancelledCommitStopsHookChildrenBeforeReturning() async throws {
         let fixture = try await CoreFixture.make()
         defer { fixture.remove() }

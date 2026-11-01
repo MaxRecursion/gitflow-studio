@@ -6,6 +6,9 @@ import OSLog
 public struct GitProcessRunner: Sendable {
     public let executable: URL
     private static let logger = Logger(subsystem: "studio.gitflow", category: "git")
+    // A timeout must not queue behind the blocking subprocess/drain workers.
+    // A default-QoS global timer can starve under many concurrent Git reads.
+    private static let deadlines = DispatchQueue(label: "studio.gitflow.git-deadlines", qos: .userInitiated)
     public init() {
         let candidates = ["/opt/homebrew/bin/git", "/usr/local/bin/git", "/usr/bin/git"]
         executable = URL(fileURLWithPath: candidates.first { FileManager.default.isExecutableFile(atPath: $0) } ?? "/usr/bin/git")
@@ -58,9 +61,10 @@ public struct GitProcessRunner: Sendable {
         process.environment = environment
         let output = Pipe(), errors = Pipe(), standardInput = Pipe()
         process.standardOutput = output; process.standardError = errors; process.standardInput = standardInput
-        try state.launch(process)
         let timer = DispatchWorkItem { state.stop(.timeout) }
-        DispatchQueue.global().asyncAfter(deadline: .now() + max(0.01, timeout), execute: timer)
+        Self.deadlines.asyncAfter(deadline: .now() + max(0.01, timeout), execute: timer)
+        defer { timer.cancel() }
+        try state.launch(process)
         let group = DispatchGroup()
         let capturedOutput = Capture(), capturedError = Capture()
         for (handle, capture, handler) in [(output.fileHandleForReading, capturedOutput, onOutput), (errors.fileHandleForReading, capturedError, nil)] {
@@ -111,7 +115,6 @@ public struct GitProcessRunner: Sendable {
         }
         process.waitUntilExit()
         group.wait()
-        timer.cancel()
         try state.finish()
         Self.logger.debug("Git subprocess finished with status \(process.terminationStatus)")
         return GitOutput(stdout: capturedOutput.data, stderr: capturedError.data, exitCode: process.terminationStatus)
@@ -144,7 +147,7 @@ private final class ProcessState: @unchecked Sendable {
     }
     func launch(_ process: Process) throws {
         lock.lock(); defer { lock.unlock() }
-        if reason != nil { throw CancellationError() }
+        try checkStopReason()
         self.process = process
         try process.run()
         // Foundation creates a separate process group on macOS. Verify that
@@ -169,6 +172,10 @@ private final class ProcessState: @unchecked Sendable {
     func finish() throws {
         lock.lock(); defer { lock.unlock() }
         process = nil; processGroup = nil
+        try checkStopReason()
+    }
+    // Caller holds lock; preserve timeout/output errors even before launch.
+    private func checkStopReason() throws {
         switch reason {
         case .cancelled: throw CancellationError()
         case .timeout: throw GitError.timedOut
