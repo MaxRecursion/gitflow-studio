@@ -1,0 +1,30 @@
+name: Instruments service capture
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build measured Git service fixture
+        run: swift build --build-system native -c release --product GitBenchmarks
+      - name: Record CPU trace
+        run: |
+          mkdir -p build/profiles/service
+          sw_vers > build/profiles/service/environment.txt
+          xcodebuild -version >> build/profiles/service/environment.txt
+          swift --version >> build/profiles/service/environment.txt
+          sysctl hw.model hw.memsize hw.logicalcpu >> build/profiles/service/environment.txt
+          binary_directory="$(swift build --build-system native -c release --show-bin-path)"
+          shasum -a 256 "$binary_directory/GitBenchmarks" > build/profiles/service/build-sha256.txt
+          xcrun xctrace record --template 'Time Profiler' --time-limit 30s --output build/profiles/service/GitServices.trace --launch -- "$binary_directory/GitBenchmarks"
+          xcrun xctrace export --input build/profiles/service/GitServices.trace --toc --output build/profiles/service/table-of-contents.xml
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: Instruments-service-evidence
+          path: build/profiles/service
+          if-no-files-found: error
