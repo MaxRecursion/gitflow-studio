@@ -1,17 +1,33 @@
 name: Instruments service capture
 on:
   workflow_dispatch:
+    inputs:
+      source_run:
+        description: 'Optional earlier capture run ID to export, without recording again'
+        required: false
+        default: ''
 permissions:
   contents: read
+  actions: read
 jobs:
   capture:
     runs-on: macos-15
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Download an existing capture
+        if: inputs.source_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.source_run }}
+        run: |
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name Instruments-service-evidence --dir build/profiles/service
       - name: Build measured Git service fixture
+        if: inputs.source_run == ''
         run: swift build --build-system native -c release --product GitBenchmarks
       - name: Record CPU trace
+        if: inputs.source_run == ''
         run: |
           mkdir -p build/profiles/service
           sw_vers > build/profiles/service/environment.txt
@@ -22,6 +38,10 @@ jobs:
           shasum -a 256 "$binary_directory/GitBenchmarks" > build/profiles/service/build-sha256.txt
           xcrun xctrace record --template 'Time Profiler' --time-limit 30s --output build/profiles/service/GitServices.trace --launch -- "$binary_directory/GitBenchmarks"
           xcrun xctrace export --input build/profiles/service/GitServices.trace --toc --output build/profiles/service/table-of-contents.xml
+      - name: Export sampled CPU data
+        run: |
+          xcrun xctrace export --input build/profiles/service/GitServices.trace --xpath '/trace-toc/run[@number="1"]/data/table[@schema="time-profile"]' --output build/profiles/service/time-profile.xml
+          xcrun xctrace export --input build/profiles/service/GitServices.trace --xpath '/trace-toc/run[@number="1"]/data/table[@schema="time-sample"]' --output build/profiles/service/time-samples.xml
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
