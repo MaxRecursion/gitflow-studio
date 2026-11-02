@@ -7,7 +7,8 @@ November 2, 2026 — direct-distribution engineering preview, **0.2.0 (build 2)*
 - Source: https://github.com/MaxRecursion/gitflow-studio
 - Portfolio: https://maxrecursion.dev (Projects → GitFlow Studio); existing published entry retained.
 - Local artifacts: `build/releases/0.2.0-preview/` — universal native app, ad hoc preview ZIP, matching arm64/x86_64 debug symbols, source archive, QA evidence, checksums and readiness manifest.
-- App/runtime source: `d1922bb`; the final manifest also records the documentation/source-archive revision. The isolated release checkout excludes the separate, uncommitted UI styling work in the main workspace.
+- Packaged app/runtime source: `d1922bb`; the final manifest records documentation/source-archive revision `31ce37d`. Those local preview artifacts remain pinned to that verified snapshot.
+- Native workspace polish is now committed to `main` at `ea5505a`. [Validation run 41393510075](https://github.com/MaxRecursion/gitflow-studio/actions/runs/41393510075) passes 79 core tests and seven native UI tests on ARM, plus native Xcode and universal builds. The local preview archives above predate this styling update; the Intel results below cover the earlier runtime snapshot.
 
 The app is locally signed ad hoc. It has **no Developer ID signature or notarization ticket**, and no customer release or Apple upload has been made. Follow [the direct-distribution handoff](../Distribution/Direct/README.md) and [RELEASING.md](RELEASING.md).
 
