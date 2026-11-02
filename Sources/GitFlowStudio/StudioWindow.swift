@@ -3,6 +3,8 @@ import AppKit
 import GitCore
 
 struct StudioWindow: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("studioAnimationsEnabled") private var animationsEnabled = true
     @ViewState private var model = StudioModel()
     @ViewState private var nativeWindow: NSWindow?
     var body: some View {
@@ -23,10 +25,12 @@ struct StudioWindow: View {
                 Divider()
                 statusBar
             }
+            .background(StudioTheme.canvas)
             .navigationTitle(model.repository?.url.lastPathComponent ?? "GitFlow Studio")
             .navigationSubtitle(model.repository == nil ? "A clearer view of your work" : model.status.branch)
             .toolbar { toolbar }
         }
+        .background(StudioTheme.canvas)
         .background(WindowSessionReader(window: $nativeWindow, model: model,
                                          edited: model.hasUnsavedDraft))
         .alert("Git needs your attention", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
@@ -82,9 +86,18 @@ struct StudioWindow: View {
                         Text(section.rawValue)
                         Spacer()
                         if section == .changes && !model.status.files.isEmpty {
-                            Text("\(model.status.files.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                            Text("\(model.status.files.count)")
+                                .font(.caption.monospacedDigit().weight(.medium))
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
+                                .contentTransition(.numericText())
                         }
-                    } } icon: { Image(systemName: section.icon) }.tag(section).accessibilityIdentifier("workspace-\(section.rawValue)")
+                    } } icon: {
+                        Image(systemName: section.icon)
+                            .frame(width: 22, height: 25)
+                    }
+                    .padding(.vertical, 3)
+                    .tag(section).accessibilityIdentifier("workspace-\(section.rawValue)")
                 }
             } header: { Text("Workspace") }
             if model.repository != nil {
@@ -111,12 +124,29 @@ struct StudioWindow: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let repository = model.repository {
+                VStack(alignment: .leading, spacing: 7) {
+                    Label(repository.url.lastPathComponent, systemImage: "folder.fill")
+                        .font(.headline).lineLimit(1)
+                    Label(model.status.branch, systemImage: "arrow.triangle.branch")
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(StudioTheme.accent.opacity(0.055))
+                .overlay(alignment: .bottom) { Rectangle().fill(StudioTheme.border).frame(height: 1) }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             HStack(spacing: 9) {
-                Image(systemName: "arrow.triangle.branch").foregroundStyle(.tint)
+                Image(systemName: "arrow.triangle.branch")
+                    .font(.system(size: 16, weight: .medium)).foregroundStyle(StudioTheme.accent)
+                    .frame(width: 34, height: 34)
+                    .background(StudioTheme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("GitFlow Studio").font(.headline)
-                    Text("Local. Native. In your control.").font(.caption2).foregroundStyle(.secondary)
+                    Text("GitFlow Studio").font(.callout.weight(.semibold))
+                    Text("A clearer path for your ideas.").font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer()
             }.padding(14)
@@ -124,11 +154,13 @@ struct StudioWindow: View {
     }
 
     private var welcome: some View {
-        VStack(spacing: 22) {
-            Image(systemName: "arrow.triangle.branch").font(.system(size: 54, weight: .light)).foregroundStyle(.tint)
-            VStack(spacing: 8) {
+        VStack(spacing: 25) {
+            WelcomeFlowIllustration().frame(width: 400, height: 152).accessibilityHidden(true)
+            VStack(spacing: 11) {
                 Text("Make room for your next idea.").font(.largeTitle.weight(.semibold))
-                Text("Your repositories, changes, and conflicts—clearly in view.").foregroundStyle(.secondary)
+                Text("Review your changes, save a checkpoint, and explore what comes next.")
+                    .font(.title3).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .frame(maxWidth: 460)
             }
             HStack {
                 Button("Open Repository…", action: model.openPanel).buttonStyle(.borderedProminent)
@@ -136,7 +168,12 @@ struct StudioWindow: View {
                 Button("Initialize…", action: model.initialize)
             }.controlSize(.large)
             Text("Or drop a repository folder into this window").font(.caption).foregroundStyle(.tertiary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            RadialGradient(colors: [StudioTheme.accent.opacity(0.075), .clear], center: .center, startRadius: 20, endRadius: 380)
+        }
     }
 
     private var conflictBanner: some View {
@@ -145,7 +182,7 @@ struct StudioWindow: View {
             Text("\(model.status.conflicts.count) files need resolution").font(.callout.weight(.medium))
             Spacer()
             Button("Open Conflict Workspace") { model.section = .conflicts }.buttonStyle(.bordered)
-        }.padding(12).background(Color.orange.opacity(0.08))
+        }.padding(.horizontal, 18).padding(.vertical, 12).background(Color.orange.opacity(0.08))
     }
 
     private var statusBar: some View {
@@ -156,14 +193,34 @@ struct StudioWindow: View {
                 Spacer()
                 Button("Cancel", action: model.cancel).buttonStyle(.plain)
             } else {
-                Image(systemName: model.status.conflicts.isEmpty ? "checkmark.circle" : "exclamationmark.circle")
-                    .foregroundStyle(model.status.conflicts.isEmpty ? Color.secondary : Color.orange)
+                Image(systemName: statusSymbol)
+                    .foregroundStyle(statusTint)
+                    .symbolEffect(.bounce, value: reduceMotion || !animationsEnabled ? nil : model.notice)
                 Text(model.notice ?? (model.repository == nil ? "Ready" : "\(model.status.files.count) changed · \(model.status.files.filter(\.isStaged).count) staged"))
                     .lineLimit(1).help(model.notice ?? "")
                 Spacer()
-                if model.status.upstream != nil { Text("↑ \(model.status.ahead)  ↓ \(model.status.behind)").monospacedDigit() }
+                if model.status.upstream != nil {
+                    Text("↑ \(model.status.ahead)  ↓ \(model.status.behind)").monospacedDigit()
+                        .help("\(model.status.ahead) commits ahead and \(model.status.behind) behind the upstream branch")
+                }
             }
-        }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 14).frame(height: 30)
+        }
+        .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 16).frame(height: 38)
+        .background(StudioTheme.surface)
+        .animation(StudioTheme.animation(reduceMotion: reduceMotion || !animationsEnabled), value: model.busy != nil)
+    }
+
+    private var statusSymbol: String {
+        if model.error != nil { return "exclamationmark.circle.fill" }
+        if !model.status.conflicts.isEmpty { return "exclamationmark.triangle.fill" }
+        if model.notice?.hasPrefix("Operation stopped") == true { return "pause.circle" }
+        return model.notice == nil ? "checkmark.circle" : "checkmark.circle.fill"
+    }
+
+    private var statusTint: Color {
+        if model.error != nil || !model.status.conflicts.isEmpty { return .orange }
+        if model.notice?.hasPrefix("Operation stopped") == true { return .secondary }
+        return model.notice == nil ? .secondary : StudioTheme.success
     }
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
@@ -193,6 +250,42 @@ struct StudioWindow: View {
                 } label: { Label("Repository Actions", systemImage: "ellipsis.circle") }
             }
         }
+    }
+}
+
+private struct WelcomeFlowIllustration: View {
+    var body: some View {
+        ZStack {
+            Path { main in
+                main.move(to: CGPoint(x: 65, y: 83))
+                main.addCurve(to: CGPoint(x: 335, y: 83),
+                              control1: CGPoint(x: 150, y: 83), control2: CGPoint(x: 250, y: 83))
+            }.stroke(StudioTheme.accent.opacity(0.22), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            Path { branch in
+                branch.move(to: CGPoint(x: 65, y: 83))
+                branch.addCurve(to: CGPoint(x: 200, y: 39),
+                                control1: CGPoint(x: 128, y: 83), control2: CGPoint(x: 131, y: 39))
+                branch.addCurve(to: CGPoint(x: 335, y: 83),
+                                control1: CGPoint(x: 269, y: 39), control2: CGPoint(x: 272, y: 83))
+            }.stroke(StudioTheme.accent.opacity(0.45), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            stage("Review", symbol: "doc.text.magnifyingglass", tint: StudioTheme.accent).position(x: 65, y: 101)
+            stage("Commit", symbol: "checkmark", tint: StudioTheme.success).position(x: 200, y: 57)
+            stage("Explore", symbol: "arrow.triangle.branch", tint: .blue).position(x: 335, y: 101)
+        }
+    }
+
+    private func stage(_ title: String, symbol: String, tint: Color) -> some View {
+        VStack(spacing: 9) {
+            Image(systemName: symbol)
+                .font(.system(size: 22, weight: .medium))
+                .foregroundStyle(tint)
+                .frame(width: 60, height: 60)
+                .background(StudioTheme.elevated, in: RoundedRectangle(cornerRadius: 16))
+                .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(StudioTheme.border) }
+                .shadow(color: .black.opacity(0.05), radius: 12, y: 5)
+            Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary)
+        }
+        .frame(width: 80)
     }
 }
 

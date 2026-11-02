@@ -5,6 +5,9 @@ import GitCore
 struct WorktreeWorkspace: View {
     @Bindable var model: StudioModel
     @ViewState private var sheet: WorktreeSheet?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("studioAnimationsEnabled") private var animationsEnabled = true
+    private var motion: Animation? { StudioTheme.animation(reduceMotion: reduceMotion || !animationsEnabled) }
     private enum WorktreeSheet: Identifiable {
         case create, move(GitWorktree), lock(GitWorktree), prune(GitWorktreePrunePreview)
         var id: String {
@@ -18,54 +21,34 @@ struct WorktreeWorkspace: View {
     }
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: "square.stack.3d.up")
+                    .font(.title2).foregroundStyle(StudioTheme.accent)
+                    .frame(width: 44, height: 44).background(StudioTheme.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Worktrees").font(.title2.weight(.semibold))
-                    Text("Work on multiple branches in separate folders.").foregroundStyle(.secondary)
+                    Text("A separate folder for every idea. Keep branches side by side.").font(.callout).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button("Prune Missing…") {
                     guard let repo = model.repository else { return }
                     model.execute("Checking missing worktrees…", refreshAfter: false) { sheet = .prune(try await repo.previewWorktreePrune()) }
                 }
-                Button("New Worktree…") { sheet = .create }.buttonStyle(.borderedProminent)
+                Button { sheet = .create } label: { Label("New Worktree…", systemImage: "plus") }.buttonStyle(.borderedProminent)
             }.padding(20).disabled(model.operationInProgress)
             Divider()
-            List(model.worktrees) { tree in
-                HStack(spacing: 14) {
-                    Image(systemName: tree.isMain ? "folder.fill" : "folder.badge.plus").foregroundStyle(.tint)
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(tree.branch?.replacingOccurrences(of: "refs/heads/", with: "") ?? "Detached at \(tree.head.prefix(8))").font(.headline)
-                        Text(tree.path).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
-                        if tree.isLocked { Label(tree.lockReason ?? "Locked in Git", systemImage: "lock.fill").font(.caption).foregroundStyle(.orange) }
-                        if tree.isPrunable { Text("Folder is missing · \(tree.pruneReason ?? "Registration can be pruned")").font(.caption).foregroundStyle(.secondary) }
-                        if isActive(tree) { Text("Open in this window").font(.caption).foregroundStyle(.secondary) }
+            if model.worktrees.isEmpty {
+                ContentUnavailableView("Make room for another approach", systemImage: "square.stack.3d.up", description: Text("Create a worktree to try a branch in its own folder."))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 290, maximum: 480), spacing: 16, alignment: .top)], alignment: .leading, spacing: 16) {
+                        ForEach(model.worktrees) { tree in worktreeCard(tree) }
                     }
-                    Spacer()
-                    Button("Open") { model.open(URL(fileURLWithPath: tree.path)) }.disabled(tree.isPrunable)
-                    Button("Reveal") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: tree.path) }.disabled(tree.isPrunable)
-                    if !tree.isMain {
-                        Menu {
-                            if tree.isLocked {
-                                Button("Unlock Worktree") {
-                                    if let repo = model.repository { model.execute("Unlocking worktree…") { try await repo.unlockWorktree(tree) } }
-                                }
-                            } else {
-                                Button("Lock Worktree…") { sheet = .lock(tree) }
-                            }
-                            Button("Move Worktree…") { sheet = .move(tree) }.disabled(isActive(tree) || tree.isLocked || tree.isPrunable)
-                            Divider()
-                            Button("Remove Worktree…", role: .destructive) {
-                                model.confirm("Remove Worktree", "Remove the folder at \(tree.path)? Git will refuse if it contains uncommitted changes. Its branch and commits are retained.", destructive: true) {
-                                    if let repo = model.repository { model.execute("Removing worktree…") { try await repo.removeWorktree(tree) } }
-                                }
-                            }.disabled(isActive(tree) || tree.isLocked || tree.isPrunable)
-                        } label: { Label("Worktree Actions", systemImage: "ellipsis.circle") }
-                            .labelStyle(.iconOnly).menuStyle(.borderlessButton).fixedSize()
-                    }
-                }.padding(.vertical, 10).disabled(model.operationInProgress)
-            }.listStyle(.inset)
-        }.sheet(item: $sheet) { selected in
+                    .padding(20)
+                }
+            }
+        }.background(StudioTheme.canvas).sheet(item: $sheet) { selected in
             switch selected {
             case .create: CreateWorktreeSheet(model: model)
             case .move(let tree): MoveWorktreeSheet(model: model, worktree: tree)
@@ -76,6 +59,83 @@ struct WorktreeWorkspace: View {
     }
     private func isActive(_ tree: GitWorktree) -> Bool {
         URL(fileURLWithPath: tree.path).standardizedFileURL.resolvingSymlinksInPath() == model.repository?.url
+    }
+
+    private func worktreeCard(_ tree: GitWorktree) -> some View {
+        let active = isActive(tree)
+        let branch = tree.branch?.replacingOccurrences(of: "refs/heads/", with: "") ?? "Detached at \(tree.head.prefix(8))"
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: tree.isMain ? "folder.fill" : "square.stack.3d.up.fill")
+                    .font(.title3).foregroundStyle(active ? StudioTheme.accent : Color.secondary)
+                    .frame(width: 38, height: 38).background((active ? StudioTheme.accent : Color.secondary).opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(URL(fileURLWithPath: tree.path).lastPathComponent).font(.headline).lineLimit(1)
+                    Text(tree.isMain ? "Main checkout" : "Linked worktree").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                if active { Image(systemName: "checkmark.circle.fill").foregroundStyle(StudioTheme.accent).accessibilityLabel("Open in this window") }
+            }
+            Label(branch, systemImage: "arrow.triangle.branch")
+                .font(.callout.weight(.medium)).foregroundStyle(active ? StudioTheme.accent : Color.primary)
+                .lineLimit(2).textSelection(.enabled)
+            Text(tree.path).font(.caption).foregroundStyle(.secondary).lineLimit(2).truncationMode(.middle)
+                .textSelection(.enabled).help(tree.path)
+            HStack(spacing: 7) {
+                if active { StudioBadge("This window", systemImage: "macwindow") }
+                if tree.isLocked { StudioBadge("Locked", systemImage: "lock.fill", tint: .orange).help(tree.lockReason ?? "Locked in Git") }
+                if tree.isPrunable { StudioBadge("Folder missing", systemImage: "folder.badge.questionmark", tint: .orange) }
+                if !active && !tree.isLocked && !tree.isPrunable { StudioBadge("Separate checkout", systemImage: "folder", tint: .secondary) }
+                Spacer(minLength: 0)
+            }
+            if tree.isPrunable, let reason = tree.pruneReason {
+                Text(reason).font(.caption).foregroundStyle(.secondary).lineLimit(3)
+            }
+            Divider()
+            HStack(spacing: 8) {
+                Button { model.open(URL(fileURLWithPath: tree.path)) } label: {
+                    Label(active ? "Current" : "Open", systemImage: active ? "checkmark" : "arrow.up.forward.app")
+                }.disabled(tree.isPrunable || active)
+                Button { openInEditor(tree) } label: { Label("Editor", systemImage: "chevron.left.forwardslash.chevron.right") }
+                    .disabled(tree.isPrunable).help("Open this worktree in your configured editor")
+                Spacer(minLength: 0)
+                Menu {
+                    Button("Reveal in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: tree.path) }.disabled(tree.isPrunable)
+                    if !tree.isMain {
+                        Divider()
+                        if tree.isLocked {
+                            Button("Unlock Worktree") {
+                                if let repo = model.repository { model.execute("Unlocking worktree…") { try await repo.unlockWorktree(tree) } }
+                            }
+                        } else {
+                            Button("Lock Worktree…") { sheet = .lock(tree) }
+                        }
+                        Button("Move Worktree…") { sheet = .move(tree) }.disabled(active || tree.isLocked || tree.isPrunable)
+                        Divider()
+                        Button("Remove Worktree…", role: .destructive) {
+                            model.confirm("Remove Worktree", "Remove the folder at \(tree.path)? Git will refuse if it contains uncommitted changes. Its branch and commits are retained.", destructive: true) {
+                                if let repo = model.repository { model.execute("Removing worktree…") { try await repo.removeWorktree(tree) } }
+                            }
+                        }.disabled(active || tree.isLocked || tree.isPrunable)
+                    }
+                } label: { Label("Worktree Actions", systemImage: "ellipsis") }
+                    .labelStyle(.iconOnly).menuStyle(.borderlessButton).fixedSize()
+            }
+        }
+        .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+        .background(active ? StudioTheme.elevated : StudioTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(active ? StudioTheme.accent.opacity(0.4) : StudioTheme.border, lineWidth: 1))
+        .animation(motion, value: active)
+        .disabled(model.operationInProgress)
+    }
+
+    private func openInEditor(_ tree: GitWorktree) {
+        let identifier = UserDefaults.standard.string(forKey: "editorBundleID") ?? "com.microsoft.VSCode"
+        guard let editor = NSWorkspace.shared.urlForApplication(withBundleIdentifier: identifier) else {
+            model.error = "The selected editor is not installed. Set its bundle identifier in Settings."
+            return
+        }
+        NSWorkspace.shared.open([URL(fileURLWithPath: tree.path)], withApplicationAt: editor, configuration: NSWorkspace.OpenConfiguration())
     }
 }
 

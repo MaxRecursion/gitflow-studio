@@ -1,0 +1,283 @@
+<style>
+#gf-concept { color-scheme: light dark; --gf-bg:light-dark(#f7f8fb,#15171c); --gf-panel:light-dark(#ffffff,#1d2027); --gf-rail:light-dark(#eef0f6,#181b21); --gf-code:light-dark(#fcfcfe,#191c22); --gf-text:light-dark(#202534,#ecedf4); --gf-muted:light-dark(#626b7e,#a3aabb); --gf-line:light-dark(#dce0e9,#333844); --gf-accent:light-dark(#6443c7,#b7a1ff); --gf-soft:light-dark(#ede7ff,#312843); --gf-good:light-dark(#1d7657,#89d8b4); --gf-add:light-dark(#e7f5ed,#20382e); --gf-red:light-dark(#a43b47,#f3a1ad); --gf-remove:light-dark(#fcebed,#3e272e); --gf-blue:light-dark(#2f68b8,#91bdf5); --gf-speed:240ms; font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--gf-text); }
+#gf-concept * { box-sizing:border-box; }
+#gf-concept [hidden] { display:none !important; }
+#gf-concept .gf-window { display:flex; flex-direction:column; background:var(--gf-bg); border:1px solid var(--gf-line); border-radius:13px; overflow:clip; min-height:830px; }
+#gf-concept .gf-caption { color:var(--gf-muted); padding:0 0 10px; font-size:12px; }
+#gf-concept button { font:inherit; color:inherit; border:1px solid var(--gf-line); background:var(--gf-panel); border-radius:7px; padding:7px 10px; display:inline-flex; align-items:center; justify-content:center; gap:7px; transition:background var(--gf-speed),transform var(--gf-speed),border-color var(--gf-speed); }
+#gf-concept button:hover { background:var(--gf-soft); }
+#gf-concept button:active { transform:scale(.98); }
+#gf-concept button:disabled { opacity:.45; cursor:default; }
+#gf-concept button.gf-primary { background:var(--gf-accent); border-color:var(--gf-accent); color:light-dark(#ffffff,#211536); font-weight:500; }
+#gf-concept .gf-titlebar { display:flex; align-items:center; flex-wrap:wrap; gap:14px; min-height:54px; padding:12px 104px 12px 16px; background:var(--gf-panel); border-bottom:1px solid var(--gf-line); }
+#gf-concept .gf-lights { display:flex; gap:6px; }
+#gf-concept .gf-lights span { width:10px; height:10px; border-radius:50%; background:var(--gf-line); }
+#gf-concept .gf-brand { font-weight:500; }
+#gf-concept .gf-divider { width:1px; height:20px; background:var(--gf-line); }
+#gf-concept .gf-repo { display:flex; align-items:center; gap:7px; color:var(--gf-muted); }
+#gf-concept .gf-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:6px; background:var(--gf-soft); color:var(--gf-accent); font-size:12px; overflow-wrap:anywhere; }
+#gf-concept .gf-layout { display:grid; flex:1; grid-template-columns:155px minmax(0,1fr); min-height:548px; }
+#gf-concept .gf-rail { background:var(--gf-rail); border-right:1px solid var(--gf-line); padding:22px 10px 14px; display:flex; flex-direction:column; gap:5px; }
+#gf-concept .gf-eyebrow { margin:0 8px 9px; color:var(--gf-muted); font-size:11px; letter-spacing:.09em; text-transform:uppercase; font-weight:500; }
+#gf-concept .gf-nav { border:0; border-radius:7px; padding:9px 10px; display:flex; gap:9px; align-items:center; color:var(--gf-muted); }
+#gf-concept .gf-nav.gf-current { color:var(--gf-accent); background:var(--gf-soft); font-weight:500; }
+#gf-concept .gf-rail-bottom { margin-top:auto; padding:24px 9px 0; color:var(--gf-muted); font-size:11px; }
+#gf-concept .gf-content { min-width:0; padding:24px; }
+#gf-concept .gf-heading { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:19px; }
+#gf-concept h2 { font-size:23px; letter-spacing:-.6px; font-weight:500; line-height:1.2; margin:0 0 6px; color:var(--gf-text); }
+#gf-concept h3 { font-size:13px; font-weight:500; margin:0; color:var(--gf-text); }
+#gf-concept p { margin:0; }
+#gf-concept .gf-secondary { color:var(--gf-muted); }
+#gf-concept .gf-small { font-size:11px; }
+#gf-concept .gf-review-grid { display:grid; grid-template-columns:minmax(0,1fr) 210px; gap:16px; align-items:start; }
+#gf-concept .gf-panel { background:var(--gf-panel); border:1px solid var(--gf-line); border-radius:10px; overflow:clip; min-width:0; }
+#gf-concept .gf-panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid var(--gf-line); }
+#gf-concept .gf-pipeline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; color:var(--gf-muted); padding:0 0 18px; font-size:12px; }
+#gf-concept .gf-step { display:flex; align-items:center; gap:7px; }
+#gf-concept .gf-step b { display:grid; place-items:center; font-size:11px; font-weight:500; height:20px; width:20px; border-radius:50%; background:var(--gf-rail); color:var(--gf-muted); transition:background var(--gf-speed),color var(--gf-speed); }
+#gf-concept .gf-step.gf-active { color:var(--gf-accent); }
+#gf-concept .gf-step.gf-active b { background:var(--gf-accent); color:light-dark(#ffffff,#211536); }
+#gf-concept .gf-step.gf-complete { color:var(--gf-good); }
+#gf-concept .gf-step.gf-complete b { background:var(--gf-add); color:var(--gf-good); }
+#gf-concept .gf-file { width:100%; border:0; border-bottom:1px solid var(--gf-line); border-radius:0; padding:10px 13px; display:flex; justify-content:flex-start; text-align:left; gap:10px; min-height:44px; }
+#gf-concept .gf-file:last-child { border-bottom:0; }
+#gf-concept .gf-file[aria-pressed="true"] { background:var(--gf-soft); }
+#gf-concept .gf-file-icon { width:25px; height:27px; display:grid; place-items:center; border-radius:5px; background:var(--gf-rail); color:var(--gf-accent); font:11px ui-monospace,SFMono-Regular,monospace; }
+#gf-concept .gf-file-name { flex:1; min-width:0; overflow-wrap:anywhere; }
+#gf-concept .gf-count { color:var(--gf-good); font:11px ui-monospace,SFMono-Regular,monospace; white-space:nowrap; }
+#gf-concept .gf-count span { color:var(--gf-red); margin-left:5px; }
+#gf-concept .gf-diff { margin-top:14px; }
+#gf-concept .gf-code { margin:0; padding:15px 0; background:var(--gf-code); font:12px/1.85 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+#gf-concept .gf-code .gf-line { display:block; padding:0 12px; }
+#gf-concept .gf-code .gf-ln { display:inline-block; width:24px; color:var(--gf-muted); user-select:none; }
+#gf-concept .gf-code .gf-added { background:var(--gf-add); color:var(--gf-good); }
+#gf-concept .gf-code .gf-removed { background:var(--gf-remove); color:var(--gf-red); }
+#gf-concept .gf-code .gf-keyword { color:var(--gf-accent); }
+#gf-concept .gf-diff-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-top:1px solid var(--gf-line); font-size:11px; color:var(--gf-muted); flex-wrap:wrap; }
+#gf-concept .gf-save { padding:15px; }
+#gf-concept .gf-save-icon { width:34px; height:34px; display:grid; place-items:center; color:var(--gf-accent); background:var(--gf-soft); border-radius:9px; margin-bottom:13px; }
+#gf-concept .gf-save p { margin:7px 0 14px; font-size:12px; color:var(--gf-muted); }
+#gf-concept .gf-stage-area { min-height:90px; padding:10px; border:1px dashed var(--gf-line); border-radius:7px; margin-bottom:12px; }
+#gf-concept .gf-stage-empty { color:var(--gf-muted); font-size:11px; display:grid; place-items:center; min-height:67px; text-align:center; }
+#gf-concept .gf-staged-file { display:flex; align-items:center; gap:7px; font-size:11px; padding:5px 0; overflow-wrap:anywhere; }
+#gf-concept .gf-staged-file svg { color:var(--gf-good); flex-shrink:0; }
+#gf-concept .gf-full { width:100%; }
+#gf-concept input { font:inherit; width:100%; min-width:0; border:1px solid var(--gf-line); border-radius:6px; background:var(--gf-code); color:var(--gf-text); padding:8px; margin-bottom:10px; }
+#gf-concept label { display:block; color:var(--gf-muted); font-size:11px; margin-bottom:5px; }
+#gf-concept .gf-mini-history { margin-top:16px; padding:15px; }
+#gf-concept .gf-history-item { position:relative; padding:0 0 17px 19px; font-size:11px; }
+#gf-concept .gf-history-item:before { content:""; position:absolute; left:0; top:5px; width:7px; height:7px; border:2px solid var(--gf-accent); background:var(--gf-panel); border-radius:50%; }
+#gf-concept .gf-history-item:after { content:""; position:absolute; left:3px; top:14px; bottom:1px; width:1px; background:var(--gf-line); }
+#gf-concept .gf-history-item:last-child { padding-bottom:0; }
+#gf-concept .gf-history-item:last-child:after { display:none; }
+#gf-concept .gf-history-list { margin-top:15px; }
+#gf-concept .gf-history-list .gf-history-item:nth-child(n+3) { display:none; }
+#gf-concept .gf-status { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:9px 14px; border-top:1px solid var(--gf-line); color:var(--gf-muted); font-size:11px; background:var(--gf-panel); min-height:35px; }
+#gf-concept .gf-status svg { color:var(--gf-good); }
+#gf-concept .gf-status .gf-right { margin-left:auto; }
+#gf-concept .gf-map-layout { display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:18px; }
+#gf-concept .gf-map { min-width:0; }
+#gf-concept .gf-branch-heading { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:14px; border-bottom:1px solid var(--gf-line); }
+#gf-concept .gf-branch-label { color:var(--gf-blue); background:var(--gf-rail); border-radius:5px; padding:3px 7px; font:11px ui-monospace,SFMono-Regular,monospace; }
+#gf-concept .gf-graph-row { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:stretch; }
+#gf-concept .gf-graph-track { position:relative; min-height:72px; }
+#gf-concept .gf-graph-track:before { content:""; position:absolute; left:26px; top:0; bottom:0; width:2px; background:var(--gf-blue); }
+#gf-concept .gf-feature-track:after { content:""; position:absolute; left:54px; top:0; bottom:0; width:2px; background:var(--gf-accent); }
+#gf-concept .gf-graph-track .gf-node { position:absolute; width:10px; height:10px; border-radius:50%; background:var(--gf-panel); border:2px solid var(--gf-blue); top:31px; left:22px; z-index:1; }
+#gf-concept .gf-feature-track .gf-node { left:50px; border-color:var(--gf-accent); }
+#gf-concept .gf-graph-row.gf-selected .gf-node { background:var(--gf-accent); box-shadow:0 0 0 5px var(--gf-soft); }
+#gf-concept .gf-graph-row button { width:100%; border:0; border-bottom:1px solid var(--gf-line); border-radius:0; background:transparent; justify-content:flex-start; text-align:left; padding:15px 12px 15px 0; }
+#gf-concept .gf-graph-row.gf-selected { background:var(--gf-soft); }
+#gf-concept .gf-graph-row button span { display:block; }
+#gf-concept .gf-junction .gf-graph-track:after { content:""; position:absolute; left:26px; top:0; width:30px; height:36px; border-right:2px solid var(--gf-accent); border-bottom:2px solid var(--gf-accent); border-bottom-right-radius:28px; }
+#gf-concept .gf-graph-detail { padding:14px; border-top:1px solid var(--gf-line); min-height:87px; }
+#gf-concept .gf-worktree { padding:15px; margin-bottom:12px; transition:border-color var(--gf-speed),background var(--gf-speed); }
+#gf-concept .gf-worktree.gf-open { border-color:var(--gf-accent); background:var(--gf-soft); }
+#gf-concept .gf-worktree-title { display:flex; align-items:center; gap:8px; font-weight:500; margin-bottom:8px; }
+#gf-concept .gf-worktree p { font-size:11px; color:var(--gf-muted); margin-bottom:12px; overflow-wrap:anywhere; }
+#gf-concept .gf-worktree button { font-size:12px; }
+#gf-concept .gf-dot { width:7px; height:7px; border-radius:50%; background:var(--gf-accent); }
+#gf-concept .gf-map-description { font-size:12px; color:var(--gf-muted); padding:12px 0 0; }
+#gf-concept svg { width:15px; height:15px; flex-shrink:0; }
+#gf-concept.gf-no-motion *, #gf-concept.gf-no-motion *:before, #gf-concept.gf-no-motion *:after { transition:none !important; animation:none !important; }
+@media(max-width:850px) { #gf-concept .gf-layout { grid-template-columns:130px minmax(0,1fr); } #gf-concept .gf-content { padding:18px; } #gf-concept .gf-review-grid,#gf-concept .gf-map-layout { grid-template-columns:minmax(0,1fr); } #gf-concept .gf-right-column { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; } #gf-concept .gf-mini-history { margin-top:0; } #gf-concept .gf-window { min-height:1140px; } #gf-concept .gf-map-layout .gf-right-column { align-items:start; } }
+@media(max-width:520px) { #gf-concept .gf-layout { grid-template-columns:minmax(0,1fr); } #gf-concept .gf-rail { flex-direction:row; border-right:0; border-bottom:1px solid var(--gf-line); padding:8px; flex-wrap:wrap; } #gf-concept .gf-rail .gf-eyebrow,#gf-concept .gf-rail-bottom,#gf-concept .gf-nav.gf-extra { display:none; } #gf-concept .gf-nav { padding:7px; font-size:11px; } #gf-concept .gf-content { padding:16px 12px; } #gf-concept .gf-titlebar { padding-right:95px; gap:8px; } #gf-concept .gf-titlebar .gf-divider,#gf-concept .gf-titlebar .gf-chip { display:none; } #gf-concept .gf-titlebar .gf-repo { width:100%; margin-left:44px; font-size:11px; } #gf-concept .gf-right-column { grid-template-columns:minmax(0,1fr); } #gf-concept .gf-code { font-size:11px; } #gf-concept .gf-window { min-height:1450px; } #gf-concept .gf-status .gf-right { margin-left:0; } }
+@media(prefers-reduced-motion:reduce) { #gf-concept *, #gf-concept *:before,#gf-concept *:after { transition:none !important; animation:none !important; } }
+@media(pointer:coarse) { #gf-concept button { min-height:44px; } #gf-concept input { font-size:16px; } }
+</style>
+<div id="gf-concept" aria-label="GitFlow Studio appearance and motion concepts">
+  <div class="gf-caption">Interactive design concepts · sample repository</div>
+  <div class="viz-carousel" aria-label="GitFlow Studio visual directions">
+    <section data-variant="Review studio" aria-label="Review studio concept">
+      <div class="gf-window" id="gf-review" aria-label="GitFlow Studio review workspace">
+        <div class="gf-titlebar"><div class="gf-lights" aria-hidden="true"><span></span><span></span><span></span></div><span class="gf-brand">GitFlow Studio</span><span class="gf-divider"></span><span class="gf-repo"><i data-lucide="folder-open" aria-hidden="true"></i> orbit / web</span><span class="gf-chip"><i data-lucide="git-branch" aria-hidden="true"></i> feature/landing</span></div>
+        <div class="gf-layout">
+          <aside class="gf-rail" aria-label="Workspace navigation"><p class="gf-eyebrow">Workspace</p><div class="gf-nav gf-current"><i data-lucide="layers" aria-hidden="true"></i> Changes</div><div class="gf-nav"><i data-lucide="git-branch" aria-hidden="true"></i> History</div><div class="gf-nav"><i data-lucide="panels-top-left" aria-hidden="true"></i> Worktrees</div><div class="gf-nav gf-extra"><i data-lucide="git-merge" aria-hidden="true"></i> Conflicts</div><div class="gf-rail-bottom">A little clarity.<br>A lot of possibility.</div></aside>
+          <main class="gf-content">
+            <div class="gf-heading"><div><h2>Shape your next idea.</h2><p class="gf-secondary">Review the changes. Keep what works.</p></div><span class="gf-chip" id="gf-change-count">3 changed files</span></div>
+            <div class="gf-pipeline" aria-label="Commit workflow"><span class="gf-step gf-active" id="gf-step-review"><b>1</b> Review</span><span aria-hidden="true">→</span><span class="gf-step" id="gf-step-stage"><b>2</b> Stage</span><span aria-hidden="true">→</span><span class="gf-step" id="gf-step-commit"><b>3</b> Commit locally</span></div>
+            <div class="gf-review-grid">
+              <div>
+                <div class="gf-panel"><div class="gf-panel-head"><h3>Working changes</h3><span class="gf-secondary gf-small" id="gf-working-count">3 files</span></div><div id="gf-working-files"></div></div>
+                <div class="gf-panel gf-diff"><div class="gf-panel-head"><h3 id="gf-diff-name">Hero.tsx</h3><span class="gf-secondary gf-small" id="gf-diff-path">src/components</span></div><pre class="gf-code" id="gf-diff-code" aria-label="Selected file diff"></pre><div class="gf-diff-footer"><span id="gf-diff-stat">12 additions · 4 deletions</span><button type="button" class="cursor-interaction" id="gf-stage"><i data-lucide="plus" aria-hidden="true"></i><span>Stage this file</span></button></div></div>
+              </div>
+              <div class="gf-right-column">
+                <div class="gf-panel gf-save"><div class="gf-save-icon"><i data-lucide="git-commit-horizontal" aria-hidden="true"></i></div><h3>A version to come back to.</h3><p>Stage the changes you want to keep, then create a local commit.</p><div class="gf-stage-area" id="gf-stage-area"><div class="gf-stage-empty">Staged files will appear here.</div></div><label for="gf-message">Commit message</label><input id="gf-message" value="Refresh the landing page" autocomplete="off"><button type="button" class="gf-primary gf-full cursor-interaction" id="gf-commit" disabled><i data-lucide="git-commit-horizontal" aria-hidden="true"></i> Commit checkpoint</button><p class="gf-small" style="margin-bottom:0">Creates a Git commit locally.</p></div>
+                <div class="gf-panel gf-mini-history"><h3>Recent checkpoints</h3><div class="gf-history-list" id="gf-history"><div class="gf-history-item">Set up the page layout<div class="gf-secondary">9c21ab4 · 18 min ago</div></div><div class="gf-history-item">Add the first components<div class="gf-secondary">8bd31f0 · 42 min ago</div></div></div></div>
+              </div>
+            </div>
+          </main>
+        </div>
+        <div class="gf-status" role="status" aria-live="polite"><i data-lucide="check-circle-2" aria-hidden="true"></i><span id="gf-feedback">Ready to review · select a file to inspect it</span><span class="gf-right">Local commits stay on this Mac until pushed</span></div>
+      </div>
+    </section>
+    <section data-variant="Branch map" aria-label="Branch map concept" hidden>
+      <div class="gf-window" id="gf-branches" aria-label="GitFlow Studio branch workspace">
+        <div class="gf-titlebar"><div class="gf-lights" aria-hidden="true"><span></span><span></span><span></span></div><span class="gf-brand">GitFlow Studio</span><span class="gf-divider"></span><span class="gf-repo"><i data-lucide="folder-open" aria-hidden="true"></i> orbit / web</span><span class="gf-chip" id="gf-open-branch">feature/landing</span></div>
+        <div class="gf-layout">
+          <aside class="gf-rail" aria-label="Workspace navigation"><p class="gf-eyebrow">Workspace</p><div class="gf-nav"><i data-lucide="layers" aria-hidden="true"></i> Changes</div><div class="gf-nav gf-current"><i data-lucide="git-branch" aria-hidden="true"></i> History</div><div class="gf-nav"><i data-lucide="panels-top-left" aria-hidden="true"></i> Worktrees</div><div class="gf-nav gf-extra"><i data-lucide="git-merge" aria-hidden="true"></i> Conflicts</div><div class="gf-rail-bottom">Every experiment.<br>A place of its own.</div></aside>
+          <main class="gf-content">
+            <div class="gf-heading"><div><h2>See where your ideas go.</h2><p class="gf-secondary">Connected history. Separate spaces to experiment.</p></div></div>
+            <div class="gf-map-layout">
+              <div class="gf-panel gf-map"><div class="gf-branch-heading"><span class="gf-branch-label">main</span><span class="gf-chip" id="gf-map-feature">feature/landing</span><span class="gf-secondary gf-small">You are here</span></div>
+                <div class="gf-graph-row gf-selected" data-commit="landing"><div class="gf-graph-track gf-feature-track" aria-hidden="true"><span class="gf-node"></span></div><button class="cursor-interaction" type="button" aria-pressed="true"><div><span>Refresh the landing page</span><span class="gf-secondary gf-small">4e7bc21 · feature/landing · HEAD</span></div></button></div>
+                <div class="gf-graph-row" data-commit="layout"><div class="gf-graph-track gf-feature-track" aria-hidden="true"><span class="gf-node"></span></div><button class="cursor-interaction" type="button" aria-pressed="false"><div><span>Set up the page layout</span><span class="gf-secondary gf-small">9c21ab4 · feature/landing</span></div></button></div>
+                <div class="gf-graph-row" data-commit="fix"><div class="gf-graph-track gf-feature-track" aria-hidden="true"><span class="gf-node" style="left:22px;border-color:var(--gf-blue)"></span></div><button class="cursor-interaction" type="button" aria-pressed="false"><div><span>Fix the navigation focus ring</span><span class="gf-secondary gf-small">b17a902 · main</span></div></button></div>
+                <div class="gf-graph-row gf-junction" data-commit="base"><div class="gf-graph-track" aria-hidden="true"><span class="gf-node"></span></div><button class="cursor-interaction" type="button" aria-pressed="false"><div><span>Add the first components</span><span class="gf-secondary gf-small">8bd31f0 · common ancestor</span></div></button></div>
+                <div class="gf-graph-detail" id="gf-graph-detail" role="status" aria-live="polite"><h3>Refresh the landing page</h3><p class="gf-secondary gf-small">Hero.tsx, theme.css · 20 additions, 6 deletions</p><p class="gf-small" style="margin-top:7px">Selected commit on feature/landing.</p></div>
+              </div>
+              <div class="gf-right-column"><div><p class="gf-eyebrow" style="margin-left:0">Parallel experiments</p><div class="gf-panel gf-worktree gf-open" data-worktree="landing"><div class="gf-worktree-title"><span class="gf-dot"></span>Landing refresh</div><p>feature/landing<br>~/Projects/orbit-landing</p><button type="button" class="cursor-interaction" disabled>Current workspace</button></div><div class="gf-panel gf-worktree" data-worktree="checkout"><div class="gf-worktree-title"><i data-lucide="panels-top-left" aria-hidden="true"></i>Checkout experiment</div><p>feature/checkout<br>~/Projects/orbit-checkout</p><button type="button" class="cursor-interaction">Open worktree</button></div></div><p class="gf-map-description">Worktrees give each experiment its own folder and branch.</p></div>
+            </div>
+          </main>
+        </div>
+        <div class="gf-status" role="status" aria-live="polite"><i data-lucide="check-circle-2" aria-hidden="true"></i><span id="gf-map-feedback">Select a commit to see its changes</span><span class="gf-right">4 commits shown · sample history</span></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('gf-concept');
+  const motion = { enabled:true, duration:240, accent:'Iris' };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const files = [
+    { id:'hero', name:'Hero.tsx', folder:'src/components', icon:'TS', plus:12, minus:4, lines:[['','21','export function Hero() {'],['','22','  return ('],['remove','23','−   <h1>Build something.</h1>'],['add','23','+   <h1>Make your next idea real.</h1>'],['add','24','+   <p>One small step. A new possibility.</p>'],['','25','  );'],['','26','}']] },
+    { id:'theme', name:'theme.css', folder:'src/styles', icon:'CSS', plus:8, minus:2, lines:[['','8',':root {'],['remove','9','−  --accent: #6485df;'],['add','9','+  --accent: #a58ce8;'],['add','10','+  --surface-radius: 12px;'],['add','11','+  --motion-duration: 180ms;'],['','12','}']] },
+    { id:'package', name:'package.json', folder:'', icon:'{}', plus:1, minus:1, lines:[['','1','{'],['','2','  "name": "orbit",'],['remove','3','− "version": "0.1.0",'],['add','3','+ "version": "0.2.0",'],['','4','  "private": true'],['','5','}']] }
+  ];
+  let selected='hero';
+  const staged = new Set();
+  const committed = new Set();
+  let checkpointCount=0;
+  let checkpointMessages=[];
+  const working=root.querySelector('#gf-working-files');
+  const stageArea=root.querySelector('#gf-stage-area');
+  const code=root.querySelector('#gf-diff-code');
+  const stageButton=root.querySelector('#gf-stage');
+  const commitButton=root.querySelector('#gf-commit');
+  const message=root.querySelector('#gf-message');
+  const feedback=root.querySelector('#gf-feedback');
+  function persist() {
+    if(window.openai?.setWidgetState)window.openai.setWidgetState({modelContent:{concept:'GitFlow Studio visual directions',accent:motion.accent,motionEnabled:motion.enabled},privateContent:{selected,staged:[...staged],committed:[...committed],checkpointMessages,message:message.value,motion:{...motion}}}).catch(()=>{});
+  }
+  function addCheckpoint(text) {
+    const item=document.createElement('div');item.className='gf-history-item';item.dataset.checkpoint='true';item.append(document.createTextNode(text));
+    const detail=document.createElement('div');detail.className='gf-secondary';detail.textContent='Local commit · just now';item.append(detail);root.querySelector('#gf-history').prepend(item);return item;
+  }
+  function restore(snapshot) {
+    if(!snapshot||typeof snapshot!=='object')return;
+    if(files.some(f=>f.id===snapshot.selected))selected=snapshot.selected;
+    staged.clear();committed.clear();
+    (Array.isArray(snapshot.committed)?snapshot.committed:[]).filter(id=>files.some(f=>f.id===id)).forEach(id=>committed.add(id));
+    (Array.isArray(snapshot.staged)?snapshot.staged:[]).filter(id=>files.some(f=>f.id===id)&&!committed.has(id)).forEach(id=>staged.add(id));
+    if(typeof snapshot.message==='string')message.value=snapshot.message.slice(0,500);
+    checkpointMessages=(Array.isArray(snapshot.checkpointMessages)?snapshot.checkpointMessages:[]).filter(x=>typeof x==='string').slice(-3);
+    checkpointCount=checkpointMessages.length;root.querySelectorAll('[data-checkpoint]').forEach(el=>el.remove());checkpointMessages.forEach(addCheckpoint);
+    if(snapshot.motion){if(['Iris','Ocean','Mint'].includes(snapshot.motion.accent))motion.accent=snapshot.motion.accent;if(typeof snapshot.motion.enabled==='boolean')motion.enabled=snapshot.motion.enabled;if(Number.isFinite(snapshot.motion.duration))motion.duration=Math.max(120,Math.min(350,snapshot.motion.duration));}
+  }
+  const animate = (element, frames, duration=motion.duration) => {
+    if (element && motion.enabled && !reduced.matches && element.animate) element.animate(frames,{duration,easing:'cubic-bezier(.2,.8,.2,1)'});
+  };
+  const icons = () => { if(globalThis.lucide) globalThis.lucide.createIcons({attrs:{width:15,height:15}}); };
+  function makeFile(file) {
+    const button=document.createElement('button');
+    button.type='button'; button.className='gf-file cursor-interaction'; button.dataset.file=file.id;
+    button.setAttribute('aria-pressed',String(file.id===selected));
+    button.innerHTML='<span class="gf-file-icon"></span><span class="gf-file-name"></span><span class="gf-count"></span>';
+    button.children[0].textContent=file.icon;
+    button.children[1].textContent=file.name;
+    button.children[2].innerHTML='+'+file.plus+'<span>−'+file.minus+'</span>';
+    button.addEventListener('click',()=>{selected=file.id;render();persist();animate(code,[{transform:'translateY(5px)',opacity:.65},{transform:'translateY(0)',opacity:1}]);});
+    return button;
+  }
+  function render() {
+    working.replaceChildren();
+    files.filter(f=>!committed.has(f.id)).forEach(f=>working.append(makeFile(f)));
+    if(committed.size===files.length) { const empty=document.createElement('div');empty.className='gf-stage-empty';empty.textContent='All changes committed. Working tree clean.';working.append(empty); }
+    const remaining=files.length-committed.size;
+    root.querySelector('#gf-working-count').textContent=remaining+' files';
+    root.querySelector('#gf-change-count').textContent=remaining+' changed files';
+    stageArea.replaceChildren();
+    if(!staged.size) { const empty=document.createElement('div');empty.className='gf-stage-empty';empty.textContent='Staged files will appear here.';stageArea.append(empty); }
+    files.filter(f=>staged.has(f.id)).forEach(f=>{const item=document.createElement('div');item.className='gf-staged-file';item.innerHTML='<i data-lucide="check-circle-2" aria-hidden="true"></i><span></span>';item.lastElementChild.textContent=f.name;stageArea.append(item);});
+    const file=files.find(f=>f.id===selected);
+    root.querySelector('#gf-diff-name').textContent=file.name;
+    root.querySelector('#gf-diff-path').textContent=file.folder;
+    root.querySelector('#gf-diff-stat').textContent=committed.has(selected)?'Included in a local commit':file.plus+' additions · '+file.minus+' deletions';
+    code.replaceChildren();
+    file.lines.forEach(([kind,num,text])=>{const line=document.createElement('span');line.className='gf-line'+(kind==='add'?' gf-added':kind==='remove'?' gf-removed':'');const ln=document.createElement('span');ln.className='gf-ln';ln.textContent=num;line.append(ln,document.createTextNode(text));code.append(line);});
+    stageButton.querySelector('span').textContent=committed.has(selected)?'Committed':staged.has(selected)?'Unstage this file':'Stage this file';
+    stageButton.disabled=committed.has(selected);
+    commitButton.disabled=!staged.size || !message.value.trim();
+    root.querySelector('#gf-step-review').className='gf-step '+(staged.size||checkpointCount?'gf-complete':'gf-active');
+    root.querySelector('#gf-step-stage').className='gf-step '+(staged.size?'gf-active':checkpointCount?'gf-complete':'');
+    root.querySelector('#gf-step-commit').className='gf-step '+(checkpointCount?'gf-complete':'');
+    icons();
+  }
+  stageButton.addEventListener('click',()=>{
+    if(committed.has(selected))return;
+    const file=files.find(f=>f.id===selected);
+    if(staged.has(selected)) { staged.delete(selected);feedback.textContent=file.name+' unstaged · working file preserved'; }
+    else { staged.add(selected);feedback.textContent=file.name+' staged · '+staged.size+' ready for a local commit'; }
+    render();
+    persist();
+    animate(stageArea,[{transform:'translateY(7px)',background:'var(--gf-soft)'},{transform:'translateY(0)',background:'transparent'}]);
+  });
+  message.addEventListener('input',()=>{commitButton.disabled=!staged.size||!message.value.trim();});
+  commitButton.addEventListener('click',()=>{
+    if(!staged.size || !message.value.trim())return;
+    const count=staged.size;staged.forEach(id=>committed.add(id));staged.clear();checkpointCount++;
+    checkpointMessages.push(message.value.trim());const item=addCheckpoint(message.value.trim());
+    const remaining=files.find(f=>!committed.has(f.id));if(remaining)selected=remaining.id;
+    feedback.textContent='Committed '+count+' '+(count===1?'file':'files')+' locally · not pushed';
+    render();persist();animate(item,[{transform:'translateY(-12px)',opacity:.3},{transform:'translateY(0)',opacity:1}],320);
+    animate(root.querySelector('.gf-save-icon'),[{transform:'scale(.85)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],350);
+  });
+  const commits={landing:['Refresh the landing page','Hero.tsx, theme.css · 20 additions, 6 deletions','Selected commit on feature/landing.'],layout:['Set up the page layout','Layout.tsx · 42 additions, 0 deletions','Parent of the landing-page refresh.'],fix:['Fix the navigation focus ring','Navigation.tsx · 3 additions, 1 deletion','Latest commit on main.'],base:['Add the first components','Button.tsx, Card.tsx · 67 additions, 0 deletions','Common ancestor of main and feature/landing.']};
+  root.querySelectorAll('[data-commit] button').forEach(button=>button.addEventListener('click',()=>{
+    root.querySelectorAll('[data-commit]').forEach(row=>{const active=row===button.parentElement;row.classList.toggle('gf-selected',active);row.querySelector('button').setAttribute('aria-pressed',String(active));});
+    const info=commits[button.parentElement.dataset.commit];const detail=root.querySelector('#gf-graph-detail');detail.replaceChildren();
+    ['h3','p','p'].forEach((tag,i)=>{const part=document.createElement(tag);part.textContent=info[i];if(i)part.className='gf-secondary gf-small';detail.append(part);});
+    animate(detail,[{transform:'translateY(6px)',opacity:.6},{transform:'translateY(0)',opacity:1}]);
+    animate(button.parentElement.querySelector('.gf-node'),[{transform:'scale(.8)'},{transform:'scale(1.25)'},{transform:'scale(1)'}]);
+  }));
+  root.querySelectorAll('[data-worktree] button').forEach(button=>button.addEventListener('click',()=>{
+    const selectedTree=button.closest('[data-worktree]').dataset.worktree;
+    root.querySelectorAll('[data-worktree]').forEach(tree=>{const active=tree.dataset.worktree===selectedTree;tree.classList.toggle('gf-open',active);const action=tree.querySelector('button');action.disabled=active;action.textContent=active?'Current workspace':'Open worktree';});
+    root.querySelector('#gf-open-branch').textContent='feature/'+selectedTree;
+    root.querySelector('#gf-map-feature').textContent='feature/'+selectedTree;
+    const branch='feature/'+selectedTree;
+    commits.landing=selectedTree==='landing'?['Refresh the landing page','Hero.tsx, theme.css · 20 additions, 6 deletions','Selected commit on '+branch+'.']:['Add an express checkout','Checkout.tsx · 31 additions, 8 deletions','Selected commit on '+branch+'.'];
+    commits.layout=selectedTree==='landing'?['Set up the page layout','Layout.tsx · 42 additions, 0 deletions','Parent of the landing-page refresh.']:['Build the checkout form','CheckoutForm.tsx · 56 additions, 0 deletions','Parent of the express-checkout change.'];
+    commits.base[2]='Common ancestor of main and '+branch+'.';
+    ['landing','layout'].forEach((key,index)=>{const rowButton=root.querySelector('[data-commit="'+key+'"] button');rowButton.querySelector('span').textContent=commits[key][0];rowButton.querySelectorAll('span')[1].textContent=(selectedTree==='landing'?(index?'9c21ab4':'4e7bc21'):(index?'e398f74':'d41a328'))+' · '+branch+(index?'':' · HEAD');});
+    root.querySelector('[data-commit="landing"] button').click();
+    root.querySelector('#gf-map-feedback').textContent='Opened the '+selectedTree+' worktree in a separate folder';
+    animate(button.closest('[data-worktree]'),[{transform:'translateY(4px)'},{transform:'translateY(0)'}]);
+  }));
+  function applyDesign(){root.classList.toggle('gf-no-motion',!motion.enabled);root.style.setProperty('--gf-speed',motion.duration+'ms');const accents={Iris:['#6443c7','#b7a1ff','#ede7ff','#312843'],Ocean:['#205fa8','#9bc7ff','#e3edfb','#24334a'],Mint:['#1b6e59','#8ddbbd','#e0f2ec','#223d34']};const a=accents[motion.accent];root.style.setProperty('--gf-accent','light-dark('+a[0]+','+a[1]+')');root.style.setProperty('--gf-soft','light-dark('+a[2]+','+a[3]+')');}
+  restore(window.openai?.widgetState?.privateContent);render();applyDesign();
+  window.addEventListener('openai:set_globals',event=>{const snapshot=event.detail?.globals?.widgetState?.privateContent;if(snapshot){restore(snapshot);render();applyDesign();}});
+  if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{applyDesign();persist();}});tweak.addSelect(motion,'accent',{label:'Accent',options:['Iris','Ocean','Mint']});tweak.addToggle(motion,'enabled',{label:'Animate state changes'});tweak.addSlider(motion,'duration',{label:'Transition duration',min:120,max:350,step:10,unit:'ms'});}
+})();
+</script>

@@ -12,6 +12,8 @@ struct GitFlowStudioApp: App {
         WindowGroup("GitFlow Studio", id: "repository") {
             StudioWindow()
                 .frame(minWidth: 960, minHeight: 640)
+                .tint(StudioTheme.accent)
+                .accentColor(StudioTheme.accent)
         }
         .defaultSize(width: min(1340, max(960, (NSScreen.main?.visibleFrame.width ?? 1364) - 24)),
                      height: min(860, max(640, (NSScreen.main?.visibleFrame.height ?? 940) - 80)))
@@ -26,7 +28,7 @@ struct GitFlowStudioApp: App {
                 Button("Find Command…") { NotificationCenter.default.post(name: .studioCommands, object: nil) }.keyboardShortcut("p", modifiers: [.command, .shift])
             }
         }
-        Settings { StudioSettings() }
+        Settings { StudioSettings().tint(StudioTheme.accent) }
     }
 }
 
@@ -65,9 +67,13 @@ extension Notification.Name {
 struct StudioSettings: View {
     @AppStorage("editorBundleID") var editor = "com.microsoft.VSCode"
     @AppStorage("restoreRepository") var restore = true
+    @AppStorage("studioAnimationsEnabled") var animations = true
     var body: some View {
         Form {
             Toggle("Reopen the last repository on launch", isOn: $restore)
+            Toggle("Animate workspace feedback", isOn: $animations)
+            Text("Brief transitions confirm selections and completed operations. The system Reduce Motion setting always takes priority.")
+                .font(.caption).foregroundStyle(.secondary)
             TextField("External editor bundle identifier", text: $editor)
             Text("GitFlow Studio uses your installed Git, credential helpers, SSH configuration, identity, and hooks. No account or telemetry is required.")
                 .font(.callout).foregroundStyle(.secondary)

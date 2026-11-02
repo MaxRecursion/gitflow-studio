@@ -28,6 +28,13 @@ struct StudioConfirmation: Identifiable {
     let action: @MainActor () -> Void
 }
 
+/// A successful local commit made in this window, rather than a predicted outcome.
+struct StudioCheckpoint: Identifiable {
+    let id = UUID()
+    let subject: String
+    let amended: Bool
+}
+
 @MainActor @Observable
 final class StudioModel {
     var repository: GitRepository?
@@ -55,6 +62,7 @@ final class StudioModel {
     var busy: String?
     var error: String?
     var notice: String?
+    var lastCheckpoint: StudioCheckpoint?
     var confirmation: StudioConfirmation?
     var recentPaths = UserDefaults.standard.stringArray(forKey: "recentRepositories") ?? []
     var showClone = false
@@ -124,6 +132,7 @@ final class StudioModel {
             conflictModel = ConflictViewModel(repository: repo)
             commits = []; branches = []; remotes = []; stashes = []; tags = []; worktrees = []; search = ""
             commitMessage = ""; coauthorName = ""; coauthorEmail = ""; selectedCommit = nil; commitDetail = ""
+            lastCheckpoint = nil
             stagedDiff = false; diffLoading = false
             section = nextStatus.conflicts.isEmpty ? .changes : .conflicts
             recentPaths.removeAll { $0 == repo.url.path }
@@ -247,9 +256,11 @@ final class StudioModel {
 
     func stage(_ file: GitFileChange, staged: Bool) {
         guard let repo = repository else { return }
-        execute(staged ? "Staging…" : "Unstaging…") {
+        execute(staged ? "Staging…" : "Unstaging…") { [self] in
             let paths = [file.path] + (file.originalPath.map { [$0] } ?? [])
             if staged { try await repo.stage(paths: paths) } else { try await repo.unstage(paths: paths) }
+            let name = URL(fileURLWithPath: file.path).lastPathComponent
+            notice = staged ? "\(name) staged for a local commit" : "\(name) unstaged; working file preserved"
         }
     }
 
@@ -258,8 +269,9 @@ final class StudioModel {
         let files = status.files.filter { !$0.isConflicted }
         let paths = Array(Set(files.flatMap { [$0.path] + ($0.originalPath.map { [$0] } ?? []) }))
         guard !paths.isEmpty else { return }
-        execute(staged ? "Staging changes…" : "Unstaging changes…") {
+        execute(staged ? "Staging changes…" : "Unstaging changes…") { [self] in
             if staged { try await repo.stage(paths: paths) } else { try await repo.unstage(paths: paths) }
+            notice = staged ? "Changes staged for a local commit" : "Changes unstaged; working files preserved"
         }
     }
 
@@ -269,7 +281,8 @@ final class StudioModel {
         let coauthors = coauthorName.isEmpty && coauthorEmail.isEmpty ? [] : [GitIdentity(name: coauthorName, email: coauthorEmail)]
         execute(amend ? "Amending commit…" : "Creating commit…") { [self] in
             try await repo.commit(message: message, amend: amend, coauthors: coauthors)
-            commitMessage = ""; notice = amend ? "Commit amended" : "Commit created"
+            lastCheckpoint = StudioCheckpoint(subject: String(message.split(whereSeparator: \.isNewline).first ?? "Commit"), amended: amend)
+            commitMessage = ""; notice = amend ? "Commit amended locally · not pushed" : "Checkpoint committed locally · not pushed"
         }
     }
 
