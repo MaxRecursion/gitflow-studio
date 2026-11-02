@@ -11,6 +11,14 @@ final class RepositoryMonitor: @unchecked Sendable {
     private let callback: Callback
     private let queue = DispatchQueue(label: "studio.repository.events", qos: .utility)
 
+    static func start(paths: [String], onChange: @escaping @Sendable () -> Void) async -> RepositoryMonitor {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: RepositoryMonitor(paths: paths, onChange: onChange))
+            }
+        }
+    }
+
     init(paths: [String], onChange: @escaping @Sendable () -> Void) {
         callback = Callback(onChange)
         var context = FSEventStreamContext(version: 0, info: Unmanaged.passUnretained(callback).toOpaque(), retain: nil, release: nil, copyDescription: nil)
@@ -24,10 +32,26 @@ final class RepositoryMonitor: @unchecked Sendable {
 
     deinit {
         if let stream {
-            FSEventStreamStop(stream); FSEventStreamInvalidate(stream)
-            // Drain delivered callbacks before releasing their unretained context.
-            queue.sync {}
-            FSEventStreamRelease(stream)
+            let teardown = Teardown(stream: stream, callback: callback, queue: queue)
+            DispatchQueue.global(qos: .utility).async { teardown.finish() }
+        }
+    }
+
+    // A single background job owns teardown; the context remains alive through
+    // the callback drain. Repository switches never synchronously wait on FSEvents.
+    private final class Teardown: @unchecked Sendable {
+        let stream: FSEventStreamRef
+        let callback: Callback
+        let queue: DispatchQueue
+        init(stream: FSEventStreamRef, callback: Callback, queue: DispatchQueue) {
+            self.stream = stream; self.callback = callback; self.queue = queue
+        }
+        func finish() {
+            withExtendedLifetime(callback) {
+                FSEventStreamStop(stream); FSEventStreamInvalidate(stream)
+                queue.sync {}
+                FSEventStreamRelease(stream)
+            }
         }
     }
 }

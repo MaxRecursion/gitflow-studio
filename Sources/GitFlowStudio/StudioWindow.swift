@@ -226,6 +226,7 @@ struct StudioWindow: View {
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
             Button(action: model.openPanel) { Label("Open Repository", systemImage: "folder.badge.plus") }
+                .accessibilityIdentifier("open-repository")
         }
         ToolbarItemGroup(placement: .primaryAction) {
             if model.repository != nil {

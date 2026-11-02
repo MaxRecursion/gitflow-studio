@@ -34,11 +34,13 @@ struct WindowSessionReader: NSViewRepresentable {
             guard self.window !== window else { return }
             detach()
             self.window = window
+            model.presentationWindow = window
             previousDelegate = window.delegate
             window.delegate = self
             WindowSessionRegistry.shared.add(model)
         }
         func detach() {
+            if model.presentationWindow === window { model.presentationWindow = nil }
             if window?.delegate === self { window?.delegate = previousDelegate }
             WindowSessionRegistry.shared.remove(model)
             window = nil; previousDelegate = nil

@@ -74,7 +74,11 @@ final class StudioModel {
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var diffTask: Task<Void, Never>?
     @ObservationIgnored private var monitor: RepositoryMonitor?
+    @ObservationIgnored private var monitorTask: Task<Void, Never>?
     @ObservationIgnored private var debounceTask: Task<Void, Never>?
+    @ObservationIgnored weak var presentationWindow: NSWindow?
+    @ObservationIgnored private var repositoryPanel: NSOpenPanel?
+    @ObservationIgnored private var repositoryPickerScheduled = false
 
     var selectedChange: GitFileChange? { status.files.first { $0.path == selectedFile } }
     var hasUnsavedDraft: Bool { conflictModel?.dirty == true || !commitMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -84,14 +88,40 @@ final class StudioModel {
     }
 
     func openPanel() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false; panel.canChooseDirectories = true
-        panel.prompt = "Open Repository"
-        if panel.runModal() == .OK, let url = panel.url { open(url) }
+        chooseRepositoryFolder(prompt: "Open Repository", canCreate: false) { [weak self] in self?.open($0) }
+    }
+
+    private func chooseRepositoryFolder(prompt: String, canCreate: Bool, selection: @escaping @MainActor (URL) -> Void) {
+        guard repositoryPanel == nil, !repositoryPickerScheduled else { repositoryPanel?.makeKeyAndOrderFront(nil); return }
+        repositoryPickerScheduled = true
+        // Return from the SwiftUI action before even constructing AppKit's panel.
+        // Its first construction can initialize the system picker service.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            repositoryPickerScheduled = false
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false; panel.canChooseDirectories = true
+            panel.allowsMultipleSelection = false; panel.canCreateDirectories = canCreate
+            panel.title = prompt; panel.prompt = prompt
+            repositoryPanel = panel
+            let completion: @MainActor (NSApplication.ModalResponse) -> Void = { [weak self, weak panel] response in
+                let url = response == .OK ? panel?.url : nil
+                self?.repositoryPanel = nil
+                if let url { selection(url) }
+            }
+            if let window = presentationWindow, window.attachedSheet == nil {
+                panel.beginSheetModal(for: window, completionHandler: completion)
+            } else {
+                panel.begin(completionHandler: completion)
+            }
+        }
     }
 
     func open(_ url: URL) {
-        guard !operationInProgress else { return }
+        guard !operationInProgress else {
+            error = "Wait for the current Git operation to finish, or cancel it before opening another repository."
+            return
+        }
         afterDraftConfirmation { [self] in
             execute("Opening repository…", refreshAfter: false) { [self] in try await loadRepository(url) }
         }
@@ -123,32 +153,49 @@ final class StudioModel {
     }
 
     private func loadRepository(_ url: URL) async throws {
-            let interval = GitPerformance.signposter.beginInterval("Repository Presentation", id: GitPerformance.signposter.makeSignpostID())
-            defer { GitPerformance.signposter.endInterval("Repository Presentation", interval) }
-            let repo = try await GitRepository.open(url)
-            let nextStatus = try await repo.status()
-            refreshTask?.cancel(); diffTask?.cancel(); monitor = nil
-            repository = repo; status = nextStatus; selectedFile = nil; diffText = ""
-            conflictModel = ConflictViewModel(repository: repo)
-            commits = []; branches = []; remotes = []; stashes = []; tags = []; worktrees = []; search = ""
-            commitMessage = ""; coauthorName = ""; coauthorEmail = ""; selectedCommit = nil; commitDetail = ""
-            lastCheckpoint = nil
-            stagedDiff = false; diffLoading = false
-            section = nextStatus.conflicts.isEmpty ? .changes : .conflicts
-            recentPaths.removeAll { $0 == repo.url.path }
-            recentPaths.insert(repo.url.path, at: 0); recentPaths = Array(recentPaths.prefix(12))
-            UserDefaults.standard.set(recentPaths, forKey: "recentRepositories")
-            var paths = [repo.url.path]
-            for name in ["--absolute-git-dir", "--git-common-dir"] {
-                if let out = try? await repo.run(["rev-parse", name]) {
-                    var path = try out.strictText(context: "Repository monitoring path")
-                    if path.utf8.last == 10 { path = String(decoding: path.utf8.dropLast(), as: UTF8.self) }
-                    paths.append(URL(fileURLWithPath: path, relativeTo: repo.url).standardizedFileURL.path)
+        let interval = GitPerformance.signposter.beginInterval("Repository Presentation", id: GitPerformance.signposter.makeSignpostID())
+        defer { GitPerformance.signposter.endInterval("Repository Presentation", interval) }
+        let repo = try await GitRepository.open(url)
+        let nextStatus = try await repo.status()
+        try Task.checkCancellation()
+        refreshTask?.cancel(); diffTask?.cancel(); monitorTask?.cancel(); debounceTask?.cancel(); monitor = nil
+        repository = repo; status = nextStatus; selectedFile = nil; diffText = ""
+        conflictModel = ConflictViewModel(repository: repo)
+        commits = []; branches = []; remotes = []; stashes = []; tags = []; worktrees = []; search = ""
+        commitMessage = ""; coauthorName = ""; coauthorEmail = ""; selectedCommit = nil; commitDetail = ""
+        lastCheckpoint = nil
+        stagedDiff = false; diffLoading = false
+        section = nextStatus.conflicts.isEmpty ? .changes : .conflicts
+        recentPaths.removeAll { $0 == repo.url.path }
+        recentPaths.insert(repo.url.path, at: 0); recentPaths = Array(recentPaths.prefix(12))
+        UserDefaults.standard.set(recentPaths, forKey: "recentRepositories")
+        startMonitoring(repo)
+    }
+
+    private func startMonitoring(_ repo: GitRepository) {
+        monitorTask = Task { [weak self] in
+            do {
+                var paths = [repo.url.path]
+                for name in ["--absolute-git-dir", "--git-common-dir"] {
+                    try Task.checkCancellation()
+                    if let out = try? await repo.run(["rev-parse", name]) {
+                        var path = try out.strictText(context: "Repository monitoring path")
+                        if path.utf8.last == 10 { path = String(decoding: path.utf8.dropLast(), as: UTF8.self) }
+                        paths.append(URL(fileURLWithPath: path, relativeTo: repo.url).standardizedFileURL.path)
+                    }
                 }
+                try Task.checkCancellation()
+                let nextMonitor = await RepositoryMonitor.start(paths: paths) { [weak self] in
+                    Task { @MainActor [weak self] in self?.scheduleRefresh() }
+                }
+                guard !Task.isCancelled, let self, self.repository === repo else { return }
+                monitor = nextMonitor
+                // Close the gap between the initial status and watcher registration.
+                scheduleRefresh()
+            } catch is CancellationError {} catch {
+                if !Task.isCancelled, let self, self.repository === repo { self.error = error.localizedDescription }
             }
-            monitor = RepositoryMonitor(paths: paths) { [weak self] in
-                Task { @MainActor [weak self] in self?.scheduleRefresh() }
-            }
+        }
     }
 
     func clone(remote: String, destination: URL) {
@@ -161,13 +208,13 @@ final class StudioModel {
     }
 
     func initialize() {
-        let panel = NSOpenPanel(); panel.canChooseFiles = false; panel.canChooseDirectories = true
-        panel.canCreateDirectories = true; panel.prompt = "Initialize Repository"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        afterDraftConfirmation { [self] in
-            execute("Initializing…", refreshAfter: false) { [self] in
-                _ = try await GitRepository.initialize(at: url)
-                try await loadRepository(url)
+        chooseRepositoryFolder(prompt: "Initialize Repository", canCreate: true) { [weak self] url in
+            guard let self else { return }
+            afterDraftConfirmation { [self] in
+                execute("Initializing…", refreshAfter: false) { [self] in
+                    _ = try await GitRepository.initialize(at: url)
+                    try await loadRepository(url)
+                }
             }
         }
     }
@@ -365,7 +412,7 @@ final class StudioModel {
         operationTask = Task { [weak self] in
             guard let self else { return }
             do { try await action() }
-            catch is CancellationError { notice = "Operation stopped. Repository state has been refreshed." }
+            catch is CancellationError { notice = "Operation stopped." }
             catch { self.error = error.localizedDescription }
             busy = nil
             if refreshAfter { refresh() }

@@ -29,6 +29,39 @@ final class RepositoryUITests: XCTestCase {
         if let fixture { try? FileManager.default.removeItem(at: fixture) }
     }
 
+    func testOpenRepositoryThroughNativePicker() throws {
+        try setUpFixture(); defer { cleanUpFixture() }
+        try write("Open through the real folder picker\n")
+        // Exercise the button/picker path, rather than the --repo launch shortcut.
+        app.launchArguments = ["-restoreRepository", "NO"]
+        app.launch()
+        let open = app.buttons["open-repository"]
+        XCTAssertTrue(open.waitForExistence(timeout: 15))
+        for _ in 0..<3 {
+            open.click()
+            let panel = app.sheets.firstMatch
+            XCTAssertTrue(panel.waitForExistence(timeout: 15))
+            panel.buttons["Cancel"].click()
+            let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: panel)
+            XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
+        }
+        open.click()
+        let panel = app.sheets.firstMatch
+        XCTAssertTrue(panel.waitForExistence(timeout: 15))
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        app.typeText(fixture.path)
+        app.typeKey(.return, modifierFlags: [])
+        let choose = panel.buttons["Open Repository"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 10))
+        choose.click()
+        XCTAssertTrue(app.buttons["Stage changed.txt"].waitForExistence(timeout: 15))
+        // Also cover the interval while background monitoring is registering.
+        try Data("External edit\n".utf8).write(to: fixture.appendingPathComponent("external.txt"))
+        XCTAssertTrue(app.buttons["Stage external.txt"].waitForExistence(timeout: 10))
+        XCTAssertEqual(try git(["status", "--porcelain"]).split(separator: "\n").count, 2)
+        attachScreenshot("native-picker-repository-open")
+    }
+
     func testOpenStageCommitAndInspectHistory() throws {
         try setUpFixture()
         defer { cleanUpFixture() }

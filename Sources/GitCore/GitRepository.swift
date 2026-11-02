@@ -5,8 +5,9 @@ import Foundation
 public actor GitRepository {
     public nonisolated let url: URL
     public nonisolated let runner: GitProcessRunner
-    private var statusTask: Task<GitStatus, Error>?
+    private var statusTask: Task<Void, Never>?
     private var statusRequestID: UUID?
+    private var statusWaiters: [UUID: CheckedContinuation<GitStatus, Error>] = [:]
     private var commonDirectoryKey: String?
     public init(url: URL, runner: GitProcessRunner = GitProcessRunner()) {
         self.url = url.standardizedFileURL.resolvingSymlinksInPath(); self.runner = runner
@@ -40,11 +41,11 @@ public actor GitRepository {
         do {
             try Task.checkCancellation()
             let result = try await body(runner, url)
-            statusTask?.cancel(); statusTask = nil
+            invalidateStatusRead()
             await MutationGate.shared.release(key)
             return result
         } catch {
-            statusTask?.cancel(); statusTask = nil
+            invalidateStatusRead()
             await MutationGate.shared.release(key)
             throw error
         }
@@ -65,18 +66,55 @@ public actor GitRepository {
         }
     }
     public func status() async throws -> GitStatus {
-        if let statusTask { return try await statusTask.value }
+        try Task.checkCancellation()
+        let waiterID = UUID()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                guard !Task.isCancelled else { continuation.resume(throwing: CancellationError()); return }
+                statusWaiters[waiterID] = continuation
+                if statusTask == nil { startStatusRead() }
+            }
+        } onCancel: { Task { await self.cancelStatusWaiter(waiterID) } }
+    }
+
+    private func startStatusRead() {
+        let requestID = UUID()
+        statusRequestID = requestID
         let runner = runner, url = url
-        let task = Task {
+        statusTask = Task { [weak self] in
             let interval = GitPerformance.signposter.beginInterval("Repository Status", id: GitPerformance.signposter.makeSignpostID())
             defer { GitPerformance.signposter.endInterval("Repository Status", interval) }
-            let result = try await runner.run(["--no-optional-locks", "status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], in: url)
-            return try GitStatusParser.parse(result.stdout)
+            let result: Result<GitStatus, Error>
+            do {
+                let output = try await runner.run(["--no-optional-locks", "status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], in: url)
+                try Task.checkCancellation()
+                result = .success(try GitStatusParser.parse(output.stdout))
+            } catch { result = .failure(error) }
+            await self?.finishStatusRead(requestID, result: result)
         }
-        let requestID = UUID()
-        statusTask = task; statusRequestID = requestID
-        defer { if statusRequestID == requestID { statusTask = nil; statusRequestID = nil } }
-        return try await task.value
+    }
+
+    private func finishStatusRead(_ requestID: UUID, result: Result<GitStatus, Error>) {
+        guard statusRequestID == requestID else { return }
+        statusTask = nil; statusRequestID = nil
+        let waiters = statusWaiters.values
+        statusWaiters = [:]
+        for waiter in waiters { waiter.resume(with: result) }
+    }
+
+    private func cancelStatusWaiter(_ id: UUID) {
+        guard let waiter = statusWaiters.removeValue(forKey: id) else { return }
+        if statusWaiters.isEmpty {
+            statusTask?.cancel(); statusTask = nil; statusRequestID = nil
+        }
+        waiter.resume(throwing: CancellationError())
+    }
+
+    private func invalidateStatusRead() {
+        statusTask?.cancel(); statusTask = nil; statusRequestID = nil
+        let waiters = statusWaiters.values
+        statusWaiters = [:]
+        for waiter in waiters { waiter.resume(throwing: CancellationError()) }
     }
     public func stage(paths: [String]) async throws {
         guard !paths.isEmpty else { return }
