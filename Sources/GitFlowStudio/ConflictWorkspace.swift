@@ -585,7 +585,7 @@ private struct SavedConflictDraftsSheet: View {
 @MainActor private func exportConflictDraft(_ text: String, path: String, onError: @escaping @MainActor (String) -> Void) {
     let panel = NSSavePanel()
     panel.title = "Export Conflict Draft"
-    panel.nameFieldStringValue = URL(fileURLWithPath: path).lastPathComponent + ".draft"
+    panel.nameFieldStringValue = (path as NSString).lastPathComponent + ".draft"
     guard panel.runModal() == .OK, let url = panel.url else { return }
     Task {
         do { try await Task.detached(priority: .utility) { try Data(text.utf8).write(to: url, options: .atomic) }.value }

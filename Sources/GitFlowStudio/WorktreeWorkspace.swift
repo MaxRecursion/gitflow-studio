@@ -70,7 +70,7 @@ struct WorktreeWorkspace: View {
                     .font(.title3).foregroundStyle(active ? StudioTheme.accent : Color.secondary)
                     .frame(width: 38, height: 38).background((active ? StudioTheme.accent : Color.secondary).opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(URL(fileURLWithPath: tree.path).lastPathComponent).font(.headline).lineLimit(1)
+                    Text((tree.path as NSString).lastPathComponent).font(.headline).lineLimit(1)
                     Text(tree.isMain ? "Main checkout" : "Linked worktree").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
@@ -220,7 +220,7 @@ private struct MoveWorktreeSheet: View {
             HStack {
                 Text(destination?.path ?? "Choose a destination that does not exist").font(.callout).lineLimit(3)
                 Spacer()
-                Button("Choose…") { destination = chooseWorktreeDestination(title: "Move Worktree", suggested: URL(fileURLWithPath: worktree.path).lastPathComponent) ?? destination }
+                Button("Choose…") { destination = chooseWorktreeDestination(title: "Move Worktree", suggested: (worktree.path as NSString).lastPathComponent) ?? destination }
             }
             HStack {
                 Spacer(); Button("Cancel", role: .cancel) { dismiss() }

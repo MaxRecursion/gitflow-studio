@@ -51,7 +51,7 @@ struct StudioFileIcon: View {
     let path: String
 
     private var appearance: (symbol: String, tint: Color) {
-        switch URL(fileURLWithPath: path).pathExtension.lowercased() {
+        switch (path as NSString).pathExtension.lowercased() {
         case "swift": return ("swift", .orange)
         case "js", "jsx", "ts", "tsx", "rs", "py", "go", "c", "h", "cpp":
             return ("chevron.left.forwardslash.chevron.right", StudioTheme.accent)

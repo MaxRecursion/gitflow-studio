@@ -114,7 +114,7 @@ struct StudioWindow: View {
             Section("Repositories") {
                 ForEach(model.recentPaths, id: \.self) { path in
                     Button { model.open(URL(fileURLWithPath: path)) } label: {
-                        Label(URL(fileURLWithPath: path).lastPathComponent, systemImage: "folder")
+                        Label((path as NSString).lastPathComponent, systemImage: "folder")
                             .lineLimit(1).foregroundStyle(model.repository?.url.path == path ? Color.accentColor : Color.primary)
                     }.buttonStyle(.plain).help(path)
                         .contextMenu {

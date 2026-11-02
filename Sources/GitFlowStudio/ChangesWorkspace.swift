@@ -148,7 +148,7 @@ struct ChangesWorkspace: View {
             .accessibilityLabel("\(file.isStaged ? "Unstage" : "Stage") \(file.path)")
             StudioFileIcon(path: file.path).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(URL(fileURLWithPath: file.path).lastPathComponent)
+                Text((file.path as NSString).lastPathComponent)
                     .font(.callout.weight(.medium)).lineLimit(1)
                 Text(file.isStaged && file.isUnstaged ? "Staged + unstaged changes" : file.path)
                     .font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
@@ -261,7 +261,7 @@ struct ChangesWorkspace: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill").foregroundStyle(StudioTheme.success)
-                            Text(URL(fileURLWithPath: file.path).lastPathComponent).lineLimit(1).truncationMode(.middle)
+                            Text((file.path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 0)
                             if file.isUnstaged { Text("Partial").foregroundStyle(.secondary) }
                         }.font(.caption)
@@ -313,7 +313,7 @@ struct ChangesWorkspace: View {
             HStack(spacing: 10) {
                 StudioFileIcon(path: file.path).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(URL(fileURLWithPath: file.path).lastPathComponent).font(.headline).lineLimit(1)
+                    Text((file.path as NSString).lastPathComponent).font(.headline).lineLimit(1)
                     Text(file.path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer(minLength: 0)

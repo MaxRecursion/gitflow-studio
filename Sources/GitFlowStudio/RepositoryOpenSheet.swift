@@ -37,7 +37,7 @@ struct RepositoryOpenSheet: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "folder").foregroundStyle(.secondary)
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text(URL(fileURLWithPath: path).lastPathComponent).font(.callout.weight(.medium))
+                                        Text((path as NSString).lastPathComponent).font(.callout.weight(.medium))
                                         Text(path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                                     }
                                     Spacer()

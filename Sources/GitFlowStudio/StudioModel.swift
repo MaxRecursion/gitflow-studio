@@ -361,7 +361,7 @@ final class StudioModel {
         execute(staged ? "Staging…" : "Unstaging…") { [self] in
             let paths = [file.path] + (file.originalPath.map { [$0] } ?? [])
             if staged { try await repo.stage(paths: paths) } else { try await repo.unstage(paths: paths) }
-            let name = URL(fileURLWithPath: file.path).lastPathComponent
+            let name = (file.path as NSString).lastPathComponent
             notice = staged ? "\(name) staged for a local commit" : "\(name) unstaged; working file preserved"
         }
     }
