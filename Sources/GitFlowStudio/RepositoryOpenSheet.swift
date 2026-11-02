@@ -59,7 +59,6 @@ struct RepositoryOpenSheet: View {
             }
         }
         .padding(24).frame(width: 540)
-        .accessibilityIdentifier("repository-open-sheet")
         .onAppear { locationFocused = true }
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first, url.isFileURL else { return false }

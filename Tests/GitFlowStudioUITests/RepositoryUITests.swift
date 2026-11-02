@@ -36,7 +36,7 @@ final class RepositoryUITests: XCTestCase {
         app.launch()
         app.buttons.matching(identifier: "open-repository").firstMatch.click()
         let location = app.textFields["repository-location"]
-        XCTAssertTrue(location.waitForExistence(timeout: 5))
+        XCTAssertTrue(location.waitForExistence(timeout: 5), app.debugDescription)
         app.sheets.buttons["Cancel"].click()
         // Also verify presentation after the command palette has dismissed.
         app.typeKey("p", modifierFlags: [.command, .shift])
@@ -66,7 +66,7 @@ final class RepositoryUITests: XCTestCase {
         open.click()
         for _ in 0..<3 {
             let browse = app.buttons["browse-repository"]
-            XCTAssertTrue(browse.waitForExistence(timeout: 5))
+            XCTAssertTrue(browse.waitForExistence(timeout: 5), app.debugDescription)
             browse.click()
             let panel = app.sheets.firstMatch
             XCTAssertTrue(panel.waitForExistence(timeout: 15))
