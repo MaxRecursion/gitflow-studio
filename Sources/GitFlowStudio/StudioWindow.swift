@@ -66,9 +66,11 @@ struct StudioWindow: View {
         }
         .task {
             let args = CommandLine.arguments
+            let defaults = UserDefaults.standard
+            let restoreRepository = defaults.object(forKey: "restoreRepository") == nil || defaults.bool(forKey: "restoreRepository")
             if let index = args.firstIndex(of: "--repo"), args.indices.contains(index + 1) {
                 model.open(URL(fileURLWithPath: args[index + 1]))
-            } else if UserDefaults.standard.object(forKey: "restoreRepository") as? Bool != false, let path = model.recentPaths.first {
+            } else if restoreRepository, let path = model.recentPaths.first {
                 model.open(URL(fileURLWithPath: path))
             }
         }
@@ -195,7 +197,6 @@ struct StudioWindow: View {
             } else {
                 Image(systemName: statusSymbol)
                     .foregroundStyle(statusTint)
-                    .symbolEffect(.bounce, value: reduceMotion || !animationsEnabled ? nil : model.notice)
                 Text(model.notice ?? (model.repository == nil ? "Ready" : "\(model.status.files.count) changed · \(model.status.files.filter(\.isStaged).count) staged"))
                     .lineLimit(1).help(model.notice ?? "")
                 Spacer()

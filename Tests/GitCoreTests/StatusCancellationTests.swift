@@ -81,7 +81,7 @@ private struct SlowStatusFixture: Sendable {
     }
 
     func waitUntilStarted() async throws {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(4))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(30))
         while !FileManager.default.fileExists(atPath: starts.path), ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(10))
         }
@@ -90,7 +90,9 @@ private struct SlowStatusFixture: Sendable {
 
     func releaseEventually() -> Task<Void, Never> {
         Task {
-            do { try await Task.sleep(for: .seconds(5)); try Data().write(to: release) }
+            // Only a deadlock escape. Shared CI hosts may queue the staging
+            // subprocess behind other fixtures; this is not a latency budget.
+            do { try await Task.sleep(for: .seconds(60)); try Data().write(to: release) }
             catch { /* Cancellation keeps normal assertions independent of a timer. */ }
         }
     }

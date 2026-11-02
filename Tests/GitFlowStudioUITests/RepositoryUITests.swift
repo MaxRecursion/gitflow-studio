@@ -42,7 +42,9 @@ final class RepositoryUITests: XCTestCase {
             open.click()
             let panel = app.sheets.firstMatch
             XCTAssertTrue(panel.waitForExistence(timeout: 15))
-            panel.buttons["Cancel"].click()
+            let cancel = panel.buttons["Cancel"]
+            XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+            cancel.click()
             let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: panel)
             XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
         }

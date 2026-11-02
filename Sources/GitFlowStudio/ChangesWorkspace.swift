@@ -140,7 +140,7 @@ struct ChangesWorkspace: View {
                 Image(systemName: file.isConflicted ? "exclamationmark.triangle.fill" : file.isStaged ? "checkmark.square.fill" : "square")
                     .font(.system(size: 15))
                     .foregroundStyle(file.isConflicted ? Color.orange : file.isStaged ? StudioTheme.accent : Color.secondary)
-                    .contentTransition(.symbolEffect(.replace))
+                    .contentTransition(.opacity)
                     .animation(motion, value: file.isStaged)
             }
             .buttonStyle(.plain).disabled(file.isConflicted || model.busy != nil)
