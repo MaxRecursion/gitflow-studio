@@ -35,7 +35,8 @@ final class RepositoryUITests: XCTestCase {
         // Exercise the button/picker path, rather than the --repo launch shortcut.
         app.launchArguments = ["-restoreRepository", "NO"]
         app.launch()
-        let open = app.buttons["open-repository"]
+        // AppKit exposes both the toolbar item and its nested button to XCTest.
+        let open = app.buttons.matching(identifier: "open-repository").firstMatch
         XCTAssertTrue(open.waitForExistence(timeout: 15))
         for _ in 0..<3 {
             open.click()
