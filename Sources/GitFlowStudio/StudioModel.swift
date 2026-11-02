@@ -145,8 +145,9 @@ final class StudioModel {
             let logger = Self.pickerLog
             logger.info("Constructing native folder picker")
             let started = ContinuousClock.now
-            let slowConstruction = DispatchWorkItem { logger.warning("Native folder picker construction is still pending after 3 seconds") }
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 3, execute: slowConstruction)
+            let slowConstruction = GitPerformance.scheduleDiagnostic(after: .seconds(3)) {
+                logger.warning("Native folder picker construction is still pending after 3 seconds")
+            }
             let panel = NSOpenPanel()
             slowConstruction.cancel()
             let elapsed = started.duration(to: .now).components
