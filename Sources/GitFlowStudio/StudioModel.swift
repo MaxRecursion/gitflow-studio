@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import Observation
 import GitCore
+import OSLog
 
 enum WorkspaceSection: String, CaseIterable, Identifiable {
     case changes = "Changes", history = "History", branches = "Branches", remotes = "Remotes", stashes = "Stashes", tags = "Tags", worktrees = "Worktrees", conflicts = "Resolve Conflicts"
@@ -66,6 +67,7 @@ final class StudioModel {
     var confirmation: StudioConfirmation?
     var recentPaths = UserDefaults.standard.stringArray(forKey: "recentRepositories") ?? []
     var showClone = false
+    var showOpenRepository = false
     var showCommands = false
     var previewTitle = ""
     var previewText = ""
@@ -79,6 +81,10 @@ final class StudioModel {
     @ObservationIgnored weak var presentationWindow: NSWindow?
     @ObservationIgnored private var repositoryPanel: NSOpenPanel?
     @ObservationIgnored private var repositoryPickerScheduled = false
+    @ObservationIgnored private var chosenRepository: URL?
+    @ObservationIgnored private var browseAfterChooserDismissal = false
+    @ObservationIgnored private var openAfterCommandsDismissal = false
+    private static let pickerLog = Logger(subsystem: "studio.gitflow.mac", category: "RepositoryPicker")
 
     var selectedChange: GitFileChange? { status.files.first { $0.path == selectedFile } }
     var hasUnsavedDraft: Bool { conflictModel?.dirty == true || !commitMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -88,10 +94,47 @@ final class StudioModel {
     }
 
     func openPanel() {
-        chooseRepositoryFolder(prompt: "Open Repository", canCreate: false) { [weak self] in self?.open($0) }
+        // No AppKit file-panel initialization in the primary opening action.
+        showOpenRepository = true
     }
 
-    private func chooseRepositoryFolder(prompt: String, canCreate: Bool, selection: @escaping @MainActor (URL) -> Void) {
+    func chooseRepository(_ url: URL) {
+        browseAfterChooserDismissal = false
+        chosenRepository = url
+        showOpenRepository = false
+    }
+
+    func browseForRepository() {
+        chosenRepository = nil
+        browseAfterChooserDismissal = true
+        showOpenRepository = false
+    }
+
+    func openRepositoryFromCommands() {
+        openAfterCommandsDismissal = true
+        showCommands = false
+    }
+
+    func commandsDismissed() {
+        guard openAfterCommandsDismissal else { return }
+        openAfterCommandsDismissal = false
+        openPanel()
+    }
+
+    func repositoryChooserDismissed() {
+        if let url = chosenRepository {
+            chosenRepository = nil
+            open(url)
+        } else if browseAfterChooserDismissal {
+            browseAfterChooserDismissal = false
+            chooseRepositoryFolder(prompt: "Open Repository", canCreate: false, onCancel: { [weak self] in
+                self?.showOpenRepository = true
+            }) { [weak self] in self?.open($0) }
+        }
+    }
+
+    private func chooseRepositoryFolder(prompt: String, canCreate: Bool, onCancel: (@MainActor () -> Void)? = nil,
+                                        selection: @escaping @MainActor (URL) -> Void) {
         guard repositoryPanel == nil, !repositoryPickerScheduled else { repositoryPanel?.makeKeyAndOrderFront(nil); return }
         repositoryPickerScheduled = true
         // Return from the SwiftUI action before even constructing AppKit's panel.
@@ -99,7 +142,16 @@ final class StudioModel {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             repositoryPickerScheduled = false
+            let logger = Self.pickerLog
+            logger.info("Constructing native folder picker")
+            let started = ContinuousClock.now
+            let slowConstruction = DispatchWorkItem { logger.warning("Native folder picker construction is still pending after 3 seconds") }
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 3, execute: slowConstruction)
             let panel = NSOpenPanel()
+            slowConstruction.cancel()
+            let elapsed = started.duration(to: .now).components
+            let milliseconds = Double(elapsed.seconds) * 1_000 + Double(elapsed.attoseconds) / 1e15
+            logger.info("Native folder picker constructed in \(milliseconds, privacy: .public) ms")
             panel.canChooseFiles = false; panel.canChooseDirectories = true
             panel.allowsMultipleSelection = false; panel.canCreateDirectories = canCreate
             panel.title = prompt; panel.prompt = prompt
@@ -107,12 +159,15 @@ final class StudioModel {
             let completion: @MainActor (NSApplication.ModalResponse) -> Void = { [weak self, weak panel] response in
                 let url = response == .OK ? panel?.url : nil
                 self?.repositoryPanel = nil
-                if let url { selection(url) }
+                logger.info("Native folder picker completed with response \(response.rawValue, privacy: .public)")
+                if let url { selection(url) } else { onCancel?() }
             }
             if let window = presentationWindow, window.attachedSheet == nil {
                 panel.beginSheetModal(for: window, completionHandler: completion)
+                logger.info("Submitted native folder picker as a window sheet")
             } else {
                 panel.begin(completionHandler: completion)
+                logger.info("Submitted native folder picker as a standalone panel")
             }
         }
     }

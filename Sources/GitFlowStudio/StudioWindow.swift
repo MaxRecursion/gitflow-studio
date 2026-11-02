@@ -43,7 +43,10 @@ struct StudioWindow: View {
             }
         } message: { Text(model.confirmation?.message ?? "") }
         .sheet(isPresented: $model.showClone) { CloneSheet(model: model) }
-        .sheet(isPresented: $model.showCommands) { CommandPalette(model: model) }
+        .sheet(isPresented: $model.showOpenRepository, onDismiss: model.repositoryChooserDismissed) {
+            RepositoryOpenSheet(model: model)
+        }
+        .sheet(isPresented: $model.showCommands, onDismiss: model.commandsDismissed) { CommandPalette(model: model) }
         .sheet(isPresented: $model.showRepositorySettings) {
             if let repo = model.repository { RepositorySettingsSheet(repository: repo, onRefresh: model.refresh) }
         }

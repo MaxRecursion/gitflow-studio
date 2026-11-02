@@ -45,7 +45,8 @@ struct CommandPalette: View {
                 Button { model.section = section; dismiss() } label: { Label(section.rawValue, systemImage: section.icon).frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.borderless)
             }
             Divider()
-            Button("Open Repository…") { dismiss(); model.openPanel() }
+            Button("Open Repository…", action: model.openRepositoryFromCommands)
+                .accessibilityIdentifier("command-open-repository")
             Button("Open in Terminal") { dismiss(); model.openTerminal() }.disabled(model.repository == nil)
             Button("Open in External Editor") { dismiss(); model.externalEditor() }.disabled(model.repository == nil)
             Button("Reveal in Finder") { dismiss(); model.reveal() }.disabled(model.repository == nil)

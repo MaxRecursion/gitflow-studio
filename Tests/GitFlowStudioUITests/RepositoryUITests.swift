@@ -29,6 +29,31 @@ final class RepositoryUITests: XCTestCase {
         if let fixture { try? FileManager.default.removeItem(at: fixture) }
     }
 
+    func testOpenRepositoryByPathWithoutSystemPicker() throws {
+        try setUpFixture(); defer { cleanUpFixture() }
+        try write("Opened by Finder path\n")
+        app.launchArguments = ["-restoreRepository", "NO"]
+        app.launch()
+        app.buttons.matching(identifier: "open-repository").firstMatch.click()
+        let location = app.textFields["repository-location"]
+        XCTAssertTrue(location.waitForExistence(timeout: 5))
+        app.sheets.buttons["Cancel"].click()
+        // Also verify presentation after the command palette has dismissed.
+        app.typeKey("p", modifierFlags: [.command, .shift])
+        let command = app.buttons.matching(identifier: "command-open-repository").firstMatch
+        XCTAssertTrue(command.waitForExistence(timeout: 5))
+        command.click()
+        XCTAssertTrue(location.waitForExistence(timeout: 5))
+        location.click(); location.typeText("https://example.invalid/repo")
+        app.buttons["open-repository-location"].click()
+        XCTAssertTrue(app.staticTexts["repository-location-error"].waitForExistence(timeout: 5))
+        location.click(); app.typeKey("a", modifierFlags: .command); location.typeText(fixture.path)
+        app.buttons["open-repository-location"].click()
+        XCTAssertTrue(app.buttons["Stage changed.txt"].waitForExistence(timeout: 15))
+        XCTAssertEqual(try git(["status", "--porcelain"]).split(separator: "\n").count, 1)
+        attachScreenshot("repository-opened-by-path")
+    }
+
     func testOpenRepositoryThroughNativePicker() throws {
         try setUpFixture(); defer { cleanUpFixture() }
         try write("Open through the real folder picker\n")
@@ -38,17 +63,19 @@ final class RepositoryUITests: XCTestCase {
         // AppKit exposes both the toolbar item and its nested button to XCTest.
         let open = app.buttons.matching(identifier: "open-repository").firstMatch
         XCTAssertTrue(open.waitForExistence(timeout: 15))
+        open.click()
         for _ in 0..<3 {
-            open.click()
+            let browse = app.buttons["browse-repository"]
+            XCTAssertTrue(browse.waitForExistence(timeout: 5))
+            browse.click()
             let panel = app.sheets.firstMatch
             XCTAssertTrue(panel.waitForExistence(timeout: 15))
             let cancel = panel.buttons["Cancel"]
             XCTAssertTrue(cancel.waitForExistence(timeout: 10))
             cancel.click()
-            let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: panel)
-            XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
+            XCTAssertTrue(app.textFields["repository-location"].waitForExistence(timeout: 5))
         }
-        open.click()
+        app.buttons["browse-repository"].click()
         let panel = app.sheets.firstMatch
         XCTAssertTrue(panel.waitForExistence(timeout: 15))
         app.typeKey("g", modifierFlags: [.command, .shift])
