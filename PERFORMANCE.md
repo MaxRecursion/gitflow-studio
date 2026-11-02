@@ -17,7 +17,7 @@ The suite measures repository opening, status refresh, the first 100 history ent
 
 ## Measured results
 
-The current 0.2 Release run at source `d1922bb` is recorded in [Documentation/benchmark-0.2-preview.json](Documentation/benchmark-0.2-preview.json), timestamped `2026-11-01T19:57:06Z`. It ran from an isolated committed checkout after the universal build and 79 core tests passed in Release configuration. Compilation and fixture setup/teardown are outside the samples. The 0.1 preview remains in `Documentation/benchmark-release-preview.json` and earlier results in `Documentation/benchmark-results.json`.
+The 0.2 Release run at source `d1922bb` is recorded in [Documentation/benchmark-0.2-preview.json](Documentation/benchmark-0.2-preview.json), timestamped `2026-11-01T19:57:06Z`. It ran from an isolated committed checkout after the universal build and 79 core tests passed in Release configuration. Compilation and fixture setup/teardown are outside the samples. The 0.1 preview remains in `Documentation/benchmark-release-preview.json` and earlier results in `Documentation/benchmark-results.json`.
 
 | Operation | Median | p95 | Samples |
 |---|---:|---:|---:|
@@ -28,6 +28,12 @@ The current 0.2 Release run at source `d1922bb` is recorded in [Documentation/be
 | Git version subprocess | 3.42 ms | 4.83 ms | 30 |
 
 The measured status operation is below the 100 ms engineering target on this fixture and host. This does not establish the same result for repositories with slow storage, filters, submodules, or many untracked files. The subprocess baseline accounts for a substantial part of each small operation's wall time. CPU load and power state were not controlled; these numbers are a reproducible local baseline rather than a cross-machine guarantee.
+
+### Repository-opening fix, version 0.2.1
+
+The [new Release service run](Documentation/benchmark-0.2.1-repository-open.json) at runtime source `6222128`, timestamped `2026-11-02T09:07:08Z`, uses the same host and protocol after all 82 core tests pass in Debug and Release. It records open median **3.67 ms** / p95 **5.65 ms**, status **6.41 ms** / **9.60 ms**, first history page **10.51 ms** / **14.42 ms**, small diff **4.37 ms** / **6.34 ms**, and Git subprocess **3.30 ms** / **5.14 ms**. Each has 30 samples. Later UI/preference/test hardening at `6018e26` leaves GitCore unchanged. These are service measurements; they do not measure the folder picker or establish a causal performance comparison with the earlier run.
+
+The picker itself now uses deferred, asynchronous AppKit presentation, while FSEvents setup and teardown run off the main thread. The new native picker regression exercises three cancel cycles, repository selection and external-change monitoring. Two live samples did not catch the reported pre-picker freeze, so the exact macOS 27 failure and its latency remain unmeasured. See [diagnostic and validation details](Documentation/REPOSITORY_OPEN.md).
 
 ## Idle sample
 

@@ -1,0 +1,42 @@
+{
+  "gitVersion" : "git version 2.54.0",
+  "historyCommits" : 100,
+  "measurements" : [
+    {
+      "medianMilliseconds" : 3.665,
+      "name" : "open_repository",
+      "p95Milliseconds" : 5.647458,
+      "samples" : 30
+    },
+    {
+      "medianMilliseconds" : 6.413667,
+      "name" : "status_1000_tracked_files",
+      "p95Milliseconds" : 9.603708,
+      "samples" : 30
+    },
+    {
+      "medianMilliseconds" : 10.510958,
+      "name" : "history_first_100",
+      "p95Milliseconds" : 14.419292,
+      "samples" : 30
+    },
+    {
+      "medianMilliseconds" : 4.367458,
+      "name" : "small_unstaged_diff",
+      "p95Milliseconds" : 6.337084,
+      "samples" : 30
+    },
+    {
+      "medianMilliseconds" : 3.304542,
+      "name" : "git_version_subprocess",
+      "p95Milliseconds" : 5.139459,
+      "samples" : 30
+    }
+  ],
+  "memoryBytes" : 17179869184,
+  "operatingSystem" : "Version 27.0.1 (Build 26A434)",
+  "processors" : 10,
+  "scope" : "Warm Git service operations only. Does not measure UI rendering, application startup, idle memory, or scrolling.",
+  "timestamp" : "2026-11-02T09:07:08Z",
+  "trackedFiles" : 1000
+}
